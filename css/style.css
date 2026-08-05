@@ -1,162 +1,411 @@
-*{
-margin:0;
-padding:0;
-box-sizing:border-box;
-font-family:Arial,Helvetica,sans-serif;
+/* ==========================================================
+   GDS Ticket Reconciliation Tool
+   style.css - Part 1
+   Foundation, Layout, Header, Upload Panels & Buttons
+   ========================================================== */
+
+/* ===========================
+   CSS VARIABLES
+=========================== */
+
+:root{
+    --primary:#0b5ed7;
+    --primary-dark:#084298;
+    --success:#198754;
+    --danger:#dc3545;
+    --warning:#ffc107;
+    --purple:#6f42c1;
+    --teal:#20c997;
+
+    --bg:#eef2f7;
+    --surface:#ffffff;
+    --surface-alt:#f8f9fa;
+
+    --border:#d8dee8;
+    --text:#212529;
+    --muted:#6c757d;
+
+    --shadow:0 6px 18px rgba(0,0,0,.08);
+    --radius:12px;
+    --transition:.25s ease;
+}
+
+/* ===========================
+   RESET
+=========================== */
+
+*,
+*::before,
+*::after{
+    margin:0;
+    padding:0;
+    box-sizing:border-box;
+}
+
+html{
+    scroll-behavior:smooth;
 }
 
 body{
-background:#eef2f7;
-color:#333;
+
+    font-family:
+    "Segoe UI",
+    Tahoma,
+    Arial,
+    sans-serif;
+
+    background:var(--bg);
+
+    color:var(--text);
+
+    line-height:1.45;
+
 }
 
-header{
-background:#0B5ED7;
-color:white;
-padding:30px;
-text-align:center;
+/* ===========================
+   TYPOGRAPHY
+=========================== */
+
+h1{
+
+    font-size:30px;
+
+    font-weight:700;
+
 }
+
+h2{
+
+    font-size:20px;
+
+    margin-bottom:15px;
+
+}
+
+h3{
+
+    font-size:16px;
+
+    font-weight:600;
+
+}
+
+p{
+
+    color:var(--muted);
+
+}
+
+/* ===========================
+   LINKS
+=========================== */
+
+a{
+
+    color:var(--primary);
+
+    text-decoration:none;
+
+}
+
+a:hover{
+
+    text-decoration:underline;
+
+}
+
+/* ===========================
+   LAYOUT
+=========================== */
 
 .container{
-width:95%;
-max-width:1400px;
-margin:auto;
-padding:30px;
-}
 
-.upload-section{
-display:grid;
-grid-template-columns:1fr 1fr;
-gap:20px;
-margin-bottom:20px;
-}
+    width:min(1400px,95%);
 
-.upload-card{
-background:white;
-padding:25px;
-border-radius:10px;
-box-shadow:0 3px 10px rgba(0,0,0,.1);
-text-align:center;
-}
+    margin:auto;
 
-.upload-card input{
-margin:20px 0;
-}
-
-#compareBtn{
-display:block;
-margin:auto;
-padding:15px 40px;
-font-size:18px;
-background:#0B5ED7;
-color:white;
-border:none;
-border-radius:8px;
-cursor:pointer;
-}
-
-#compareBtn:disabled{
-background:#b5b5b5;
-cursor:not-allowed;
-}
-
-.dashboard{
-display:grid;
-grid-template-columns:repeat(4,1fr);
-gap:20px;
-margin:40px 0;
-}
-
-.card{
-background:white;
-padding:25px;
-border-radius:10px;
-text-align:center;
-box-shadow:0 2px 8px rgba(0,0,0,.1);
-}
-
-.card span{
-display:block;
-margin-top:10px;
-font-size:32px;
-font-weight:bold;
-color:#0B5ED7;
-}
-
-.search{
-margin-bottom:20px;
-}
-
-.search input{
-width:100%;
-padding:12px;
-font-size:16px;
-border:1px solid #ccc;
-border-radius:8px;
-}
-
-table{
-width:100%;
-border-collapse:collapse;
-background:white;
-}
-
-thead{
-background:#0B5ED7;
-color:white;
-}
-
-th,td{
-padding:12px;
-border:1px solid #ddd;
-}
-
-tbody tr:nth-child(even){
-background:#f8f8f8;
-}
-
-.export{
-margin-top:30px;
-display:flex;
-gap:15px;
-}
-
-.export button{
-padding:12px 30px;
-border:none;
-background:#198754;
-color:white;
-border-radius:8px;
-cursor:pointer;
-}
-
-.export button:disabled{
-background:#bbb;
-cursor:not-allowed;
-}
-
-@media(max-width:900px){
-
-.upload-section{
-
-grid-template-columns:1fr;
+    padding:30px 0 60px;
 
 }
 
-.dashboard{
+/* ===========================
+   HEADER
+=========================== */
 
-grid-template-columns:1fr 1fr;
+.topbar{
+
+    background:linear-gradient(
+        135deg,
+        var(--primary),
+        #1976ff
+    );
+
+    color:#fff;
+
+    padding:25px 40px;
+
+    box-shadow:var(--shadow);
 
 }
 
+.logo-area{
+
+    display:flex;
+
+    align-items:center;
+
+    gap:18px;
+
 }
 
-@media(max-width:600px){
+.logo-circle{
 
-.dashboard{
+    width:64px;
 
-grid-template-columns:1fr;
+    height:64px;
+
+    border-radius:50%;
+
+    background:#fff;
+
+    color:var(--primary);
+
+    display:flex;
+
+    justify-content:center;
+
+    align-items:center;
+
+    font-size:30px;
+
+    font-weight:bold;
 
 }
+
+/* ===========================
+   UPLOAD PANEL
+=========================== */
+
+.upload-panel{
+
+    display:grid;
+
+    grid-template-columns:repeat(auto-fit,minmax(320px,1fr));
+
+    gap:25px;
+
+    margin-top:30px;
+
+}
+
+.upload-box{
+
+    background:var(--surface);
+
+    border-radius:var(--radius);
+
+    box-shadow:var(--shadow);
+
+    padding:25px;
+
+    transition:var(--transition);
+
+}
+
+.upload-box:hover{
+
+    transform:translateY(-2px);
+
+}
+
+.drop-area{
+
+    border:2px dashed #9db6e8;
+
+    border-radius:12px;
+
+    background:#f8fbff;
+
+    padding:40px 20px;
+
+    text-align:center;
+
+    transition:var(--transition);
+
+}
+
+.drop-area:hover{
+
+    border-color:var(--primary);
+
+    background:#edf4ff;
+
+}
+
+.drop-area.dragover{
+
+    border-color:var(--success);
+
+    background:#e8f7ef;
+
+}
+
+.drop-area p{
+
+    margin:8px 0;
+
+}
+
+.filename{
+
+    margin-top:18px;
+
+    font-size:14px;
+
+    font-weight:600;
+
+    color:var(--primary-dark);
+
+    word-break:break-word;
+
+}
+
+/* ===========================
+   BUTTONS
+=========================== */
+
+button{
+
+    border:none;
+
+    outline:none;
+
+    cursor:pointer;
+
+    transition:var(--transition);
+
+    border-radius:8px;
+
+    font-size:15px;
+
+    font-weight:600;
+
+}
+
+.primary{
+
+    background:var(--primary);
+
+    color:#fff;
+
+    padding:12px 22px;
+
+}
+
+.primary:hover{
+
+    background:var(--primary-dark);
+
+}
+
+.success{
+
+    background:var(--success);
+
+    color:#fff;
+
+    padding:14px 32px;
+
+}
+
+.success:hover{
+
+    filter:brightness(.95);
+
+}
+
+.danger{
+
+    background:var(--danger);
+
+    color:#fff;
+
+    padding:14px 32px;
+
+}
+
+.danger:hover{
+
+    filter:brightness(.95);
+
+}
+
+button:disabled{
+
+    background:#bfc7d4;
+
+    color:#fff;
+
+    cursor:not-allowed;
+
+    transform:none;
+
+}
+
+/* ===========================
+   ACTION BAR
+=========================== */
+
+.action-bar{
+
+    margin:30px 0;
+
+    display:flex;
+
+    gap:15px;
+
+    flex-wrap:wrap;
+
+    justify-content:center;
+
+}
+
+/* ===========================
+   UTILITIES
+=========================== */
+
+.hidden{
+
+    display:none !important;
+
+}
+
+.text-center{
+
+    text-align:center;
+
+}
+
+.text-right{
+
+    text-align:right;
+
+}
+
+.mt-10{
+
+    margin-top:10px;
+
+}
+
+.mt-20{
+
+    margin-top:20px;
+
+}
+
+.mb-20{
+
+    margin-bottom:20px;
 
 }
