@@ -1,108 +1,280 @@
-const ticketHeaders = [
+/**
+ * ============================================================
+ * GDS Ticket Reconciliation Tool
+ * File: js/detector.js
+ * Description:
+ * Detects report type, header row and column mappings.
+ * ============================================================
+ */
 
-"ticket number",
-"ticket no",
-"ticket #",
-"ticket",
-"number",
-"no"
+import { COLUMN_ALIASES, GDS_TYPES, REPORT } from "./config.js";
+import { cleanText, normalizeText, findColumn } from "./utils.js";
 
-];
+/* ============================================================
+   HEADER DETECTION
+============================================================ */
 
-export function detectHeaderRow(rows){
+/**
+ * Detects the header row by scoring the first N rows.
+ *
+ * @param {Array[]} rows
+ * @returns {number}
+ */
+export function detectHeaderRow(rows) {
 
-    for(let i=0;i<20;i++){
+    let bestRow = -1;
+    let bestScore = 0;
 
-        const row = rows[i];
+    const scanLimit = Math.min(
+        rows.length,
+        REPORT.HEADER_SCAN_LIMIT
+    );
 
-        if(!row) continue;
+    for (let rowIndex = 0; rowIndex < scanLimit; rowIndex++) {
 
-        for(const cell of row){
+        const row = rows[rowIndex];
 
-            if(!cell) continue;
+        if (!Array.isArray(row)) {
+            continue;
+        }
 
-            const value = cell.toString().toLowerCase().trim();
+        let score = 0;
 
-            if(ticketHeaders.includes(value))
+        row.forEach(cell => {
 
-                return i;
+            const value = normalizeText(cell);
+
+            Object.values(COLUMN_ALIASES).forEach(aliasList => {
+
+                if (aliasList.includes(value)) {
+                    score++;
+                }
+
+            });
+
+        });
+
+        if (score > bestScore) {
+
+            bestScore = score;
+            bestRow = rowIndex;
 
         }
 
     }
 
-    return 0;
+    if (bestRow === -1) {
 
-}
-
-export function detectGDS(headers){
-
-    const cols = headers.map(h=>h.toLowerCase());
-
-    if(cols.includes("ticket #"))
-
-        return "Sabre";
-
-    if(cols.includes("number"))
-
-        return "Galileo";
-
-    if(cols.includes("no"))
-
-        return "Amadeus";
-
-    return "Unknown";
-
-}
-
-export function getTicketColumn(headers){
-
-    const possible=[
-
-"ticket number",
-"ticket no",
-"ticket #",
-"number",
-"no"
-
-];
-
-    for(let i=0;i<headers.length;i++){
-
-        const h=headers[i].toLowerCase().trim();
-
-        if(possible.includes(h))
-
-            return i;
+        throw new Error(
+            "Unable to detect the report header row."
+        );
 
     }
 
-    return -1;
+    return bestRow;
 
 }
 
-export function getStatusColumn(headers){
+/* ============================================================
+   REPORT TYPE DETECTION
+============================================================ */
 
-    const statusNames=[
+/**
+ * Determines the report type.
+ *
+ * @param {string[]} headers
+ * @returns {string}
+ */
+export function detectReportType(headers) {
 
-"status",
+    const normalized = headers.map(normalizeText);
 
-"ticket status",
+    let sabreScore = 0;
+    let galileoScore = 0;
+    let amadeusScore = 0;
 
-"document status"
+    normalized.forEach(header => {
 
-];
+        if (header === "ticket #") {
+            sabreScore++;
+        }
 
-    for(let i=0;i<headers.length;i++){
+        if (header === "number") {
+            galileoScore++;
+        }
 
-        const h=headers[i].toLowerCase().trim();
+        if (header === "no") {
+            amadeusScore++;
+        }
 
-        if(statusNames.includes(h))
+    });
 
-            return i;
+    if (
+        sabreScore >= galileoScore &&
+        sabreScore >= amadeusScore &&
+        sabreScore > 0
+    ) {
+        return GDS_TYPES.SABRE;
+    }
+
+    if (
+        galileoScore >= sabreScore &&
+        galileoScore >= amadeusScore &&
+        galileoScore > 0
+    ) {
+        return GDS_TYPES.GALILEO;
+    }
+
+    if (
+        amadeusScore > 0
+    ) {
+        return GDS_TYPES.AMADEUS;
+    }
+
+    return GDS_TYPES.SYSTEM;
+
+}
+
+/* ============================================================
+   COLUMN MAP
+============================================================ */
+
+/**
+ * Builds a dynamic column map.
+ *
+ * @param {string[]} headers
+ * @returns {Object}
+ */
+export function buildColumnMap(headers) {
+
+    return {
+
+        ticket:
+            findColumn(
+                headers,
+                COLUMN_ALIASES.ticket
+            ),
+
+        status:
+            findColumn(
+                headers,
+                COLUMN_ALIASES.status
+            ),
+
+        passenger:
+            findColumn(
+                headers,
+                COLUMN_ALIASES.passenger
+            ),
+
+        issueDate:
+            findColumn(
+                headers,
+                COLUMN_ALIASES.issueDate
+            ),
+
+        airline:
+            findColumn(
+                headers,
+                COLUMN_ALIASES.airline
+            ),
+
+        consultant:
+            findColumn(
+                headers,
+                COLUMN_ALIASES.consultant
+            )
+
+    };
+
+}
+
+/* ============================================================
+   VALIDATION
+============================================================ */
+
+/**
+ * Validates mandatory columns.
+ *
+ * @param {Object} columnMap
+ */
+export function validateColumnMap(columnMap) {
+
+    if (columnMap.ticket === -1) {
+
+        throw new Error(
+            "Unable to locate the Ticket Number column."
+        );
 
     }
 
-    return -1;
+}
+
+/* ============================================================
+   SCHEMA
+============================================================ */
+
+/**
+ * Builds the report schema.
+ *
+ * @param {Array[]} rows
+ * @returns {Object}
+ */
+export function buildSchema(rows) {
+
+    const headerRow =
+        detectHeaderRow(rows);
+
+    const headers =
+        rows[headerRow].map(cleanText);
+
+    const reportType =
+        detectReportType(headers);
+
+    const columnMap =
+        buildColumnMap(headers);
+
+    validateColumnMap(columnMap);
+
+    return {
+
+        reportType,
+
+        headerRow,
+
+        headers,
+
+        columnMap
+
+    };
+
+}
+
+/* ============================================================
+   LOG
+============================================================ */
+
+/**
+ * Writes schema information to the console.
+ *
+ * @param {Object} schema
+ */
+export function logSchema(schema) {
+
+    console.group("Detected Report");
+
+    console.log(
+        "Report Type:",
+        schema.reportType
+    );
+
+    console.log(
+        "Header Row:",
+        schema.headerRow
+    );
+
+    console.table(schema.columnMap);
+
+    console.groupEnd();
 
 }
