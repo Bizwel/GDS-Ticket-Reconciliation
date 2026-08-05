@@ -46,3 +46,20 @@ compareBtn.addEventListener("click",()=>{
     alert("Milestone 2 will process the uploaded files.");
 
 });
+
+import {parseWorkbook} from "./parser.js";
+
+import {renderTickets}
+from "./ui.js";
+
+compareBtn.addEventListener("click",async()=>{
+
+    const result=await parseWorkbook(gdsFile.files[0]);
+
+    document.getElementById("gdsCount").innerText=result.tickets.length;
+
+    document.getElementById("voidCount").innerText=result.voidCount;
+
+    renderTickets(result.tickets);
+
+});
