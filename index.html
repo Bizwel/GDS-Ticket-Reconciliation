@@ -3,41 +3,64 @@
 
 <head>
 
+    <!-- ======================================================
+         META
+    ======================================================= -->
+
     <meta charset="UTF-8">
 
-    <meta name="viewport"
-          content="width=device-width, initial-scale=1.0">
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0">
+
+    <meta
+        name="description"
+        content="GDS Ticket Reconciliation Tool">
+
+    <meta
+        name="author"
+        content="Business Well Technologies">
 
     <title>GDS Ticket Reconciliation Tool</title>
 
-    <meta name="description"
-          content="Compare GDS Sales Reports with Back Office System Reports">
+    <!-- ======================================================
+         CSS
+    ======================================================= -->
 
-    <link rel="stylesheet"
-          href="style.css">
+    <link
+        rel="stylesheet"
+        href="css/style.css">
 
 </head>
 
 <body>
 
-<!-- ======================================
+<!-- ======================================================
      HEADER
-======================================= -->
+======================================================= -->
 
-<header class="topbar">
+<header class="app-header">
 
-    <div class="logo-area">
+    <div class="header-left">
 
-        <div class="logo-circle">
+        <div class="logo">
+
             ✈
+
         </div>
 
         <div>
 
-            <h1>GDS Ticket Reconciliation Tool</h1>
+            <h1>
+
+                GDS Ticket Reconciliation Tool
+
+            </h1>
 
             <p>
-                Compare GDS Sales Reports with System Reports
+
+                Compare GDS Sales Reports with Back Office System Reports
+
             </p>
 
         </div>
@@ -46,522 +69,466 @@
 
 </header>
 
-<!-- ======================================
+
+<!-- ======================================================
      MAIN
-======================================= -->
+======================================================= -->
 
 <main class="container">
 
-<!-- ======================================
-UPLOAD SECTION
-======================================= -->
+<!-- ======================================================
+UPLOADS
+======================================================= -->
 
-<section class="upload-panel">
+<section class="upload-grid">
 
-<div class="upload-box"
-     id="gdsDropZone">
+    <!-- GDS -->
 
-<h2>
+    <article
+        class="upload-card"
+        id="gdsDropZone">
 
-GDS Sales Report
+        <h2>
 
-</h2>
+            GDS Sales Report
 
-<div class="drop-area">
+        </h2>
 
-<p>
+        <div class="drop-zone">
 
-📄 Drag & Drop
+            <p>
 
-</p>
+                Drag & Drop
 
-<p>
+            </p>
 
-or
+            <span>
 
-</p>
+                OR
 
-<input
-type="file"
-id="gdsFile"
-accept=".xlsx,.xls,.csv"
-hidden>
+            </span>
 
-<button
-id="browseGDS"
-class="primary">
+            <button
+                id="browseGDS"
+                type="button">
 
-Browse File
+                Browse File
 
-</button>
+            </button>
 
-</div>
+            <input
+                id="gdsFile"
+                type="file"
+                accept=".csv,.xls,.xlsx"
+                hidden>
 
-<p
-id="gdsFilename"
-class="filename">
+        </div>
 
-No file selected
+        <small id="gdsFileName">
 
-</p>
+            No file selected
 
-</div>
+        </small>
 
-<div class="upload-box"
-id="systemDropZone">
+    </article>
 
-<h2>
+    <!-- SYSTEM -->
 
-System Report
+    <article
+        class="upload-card"
+        id="systemDropZone">
 
-</h2>
+        <h2>
 
-<div class="drop-area">
+            System Report
 
-<p>
+        </h2>
 
-📄 Drag & Drop
+        <div class="drop-zone">
 
-</p>
+            <p>
 
-<p>
+                Drag & Drop
 
-or
+            </p>
 
-</p>
+            <span>
 
-<input
-type="file"
-id="systemFile"
-accept=".xlsx,.xls,.csv"
-hidden>
+                OR
 
-<button
-id="browseSystem"
-class="primary">
+            </span>
 
-Browse File
+            <button
+                id="browseSystem"
+                type="button">
 
-</button>
+                Browse File
 
-</div>
+            </button>
 
-<p
-id="systemFilename"
-class="filename">
+            <input
+                id="systemFile"
+                type="file"
+                accept=".csv,.xls,.xlsx"
+                hidden>
 
-No file selected
+        </div>
 
-</p>
+        <small id="systemFileName">
 
-</div>
+            No file selected
+
+        </small>
+
+    </article>
 
 </section>
 
-<!-- ======================================
+
+<!-- ======================================================
 ACTION BAR
-======================================= -->
+======================================================= -->
 
-<section class="action-bar">
+<section class="toolbar">
 
-<button
-id="compareBtn"
-class="success"
-disabled>
+    <button
+        id="compareBtn"
+        class="primary"
+        disabled>
 
-Compare Reports
+        Compare Reports
 
-</button>
+    </button>
 
-<button
-id="resetBtn"
-class="danger">
+    <button
+        id="resetBtn"
+        class="secondary">
 
-Reset
+        Reset
 
-</button>
+    </button>
 
 </section>
 
-<!-- ======================================
+
+<!-- ======================================================
 PROGRESS
-======================================= -->
+======================================================= -->
 
 <section
-id="progressSection"
-class="progress-section hidden">
+    id="progressSection"
+    class="progress-section hidden">
 
-<div
-class="progress-bar">
+    <div class="progress-bar">
 
-<div
-id="progressFill"
-class="progress-fill">
+        <div
+            id="progressFill">
 
-</div>
+        </div>
 
-</div>
+    </div>
 
-<p
-id="progressText">
+    <p id="progressMessage">
 
-Processing...
+        Ready
 
-</p>
+    </p>
 
 </section>
 
-<!-- ======================================
+
+<!-- ======================================================
 DASHBOARD
-======================================= -->
+======================================================= -->
 
-<section
-class="dashboard">
+<section class="dashboard">
 
-<div
-class="card blue">
+    <article class="metric-card">
 
-<h3>
+        <h3>GDS Records</h3>
 
-GDS Records
+        <span id="gdsCount">0</span>
 
-</h3>
+    </article>
 
-<span
-id="gdsTotal">
+    <article class="metric-card">
 
-0
+        <h3>System Records</h3>
 
-</span>
+        <span id="systemCount">0</span>
 
-</div>
+    </article>
 
-<div
-class="card green">
+    <article class="metric-card">
 
-<h3>
+        <h3>VOID Removed</h3>
 
-Valid Tickets
+        <span id="voidCount">0</span>
 
-</h3>
+    </article>
 
-<span
-id="validTickets">
+    <article class="metric-card">
 
-0
+        <h3>Duplicates</h3>
 
-</span>
+        <span id="duplicateCount">0</span>
 
-</div>
+    </article>
 
-<div
-class="card orange">
+    <article class="metric-card">
 
-<h3>
+        <h3>Missing in System</h3>
 
-VOID Removed
+        <span id="missingSystemCount">0</span>
 
-</h3>
+    </article>
 
-<span
-id="voidTickets">
+    <article class="metric-card">
 
-0
+        <h3>Missing in GDS</h3>
 
-</span>
+        <span id="missingGDSCount">0</span>
 
-</div>
-
-<div
-class="card purple">
-
-<h3>
-
-Duplicate Tickets
-
-</h3>
-
-<span
-id="duplicateTickets">
-
-0
-
-</span>
-
-</div>
-
-<div
-class="card red">
-
-<h3>
-
-Missing in System
-
-</h3>
-
-<span
-id="missingTickets">
-
-0
-
-</span>
-
-</div>
-
-<div
-class="card teal">
-
-<h3>
-
-Missing in GDS
-
-</h3>
-
-<span
-id="missingSystem">
-
-0
-
-</span>
-
-</div>
+    </article>
 
 </section>
 
-<!-- ======================================
-FILTER BAR
-======================================= -->
 
-<section
-class="filter-bar">
+<!-- ======================================================
+SEARCH
+======================================================= -->
 
-<input
-type="text"
-id="searchBox"
-placeholder="Search Ticket, Passenger, Airline...">
+<section class="search-bar">
 
-<select
-id="resultFilter">
+    <input
 
-<option value="all">
+        id="searchInput"
 
-All Results
+        type="search"
 
-</option>
+        placeholder="Search Ticket, Passenger, Airline..."
 
-<option value="missingSystem">
+        autocomplete="off">
 
-Missing in System
+    <select id="filterSelect">
 
-</option>
+        <option value="all">
 
-<option value="missingGDS">
+            All
 
-Missing in GDS
+        </option>
 
-</option>
+        <option value="missing-system">
 
-<option value="duplicate">
+            Missing in System
 
-Duplicates
+        </option>
 
-</option>
+        <option value="missing-gds">
 
-<option value="void">
+            Missing in GDS
 
-VOID
+        </option>
 
-</option>
+        <option value="duplicates">
 
-</select>
+            Duplicates
 
-</section>
+        </option>
 
-<!-- ======================================
-RESULT TABS
-======================================= -->
+        <option value="void">
 
-<section
-class="tabs">
+            VOID
 
-<button
-class="tab active"
-data-tab="missing">
+        </option>
 
-Missing in System
-
-</button>
-
-<button
-class="tab"
-data-tab="system">
-
-Missing in GDS
-
-</button>
-
-<button
-class="tab"
-data-tab="duplicate">
-
-Duplicates
-
-</button>
-
-<button
-class="tab"
-data-tab="void">
-
-VOID
-
-</button>
+    </select>
 
 </section>
 
-<!-- ======================================
+
+<!-- ======================================================
+TABS
+======================================================= -->
+
+<nav class="result-tabs">
+
+    <button
+        class="tab active"
+        data-tab="missing-system">
+
+        Missing in System
+
+    </button>
+
+    <button
+        class="tab"
+        data-tab="missing-gds">
+
+        Missing in GDS
+
+    </button>
+
+    <button
+        class="tab"
+        data-tab="duplicates">
+
+        Duplicates
+
+    </button>
+
+    <button
+        class="tab"
+        data-tab="void">
+
+        VOID
+
+    </button>
+
+</nav>
+
+
+<!-- ======================================================
 TABLE
-======================================= -->
+======================================================= -->
 
-<section
-class="table-container">
+<section class="table-wrapper">
 
-<table
-id="resultsTable">
+    <table id="resultTable">
 
-<thead>
+        <thead>
 
-<tr>
+        <tr>
 
-<th>#</th>
+            <th>#</th>
 
-<th>Ticket Number</th>
+            <th>Ticket Number</th>
 
-<th>Passenger</th>
+            <th>Passenger</th>
 
-<th>Issue Date</th>
+            <th>Issue Date</th>
 
-<th>Airline</th>
+            <th>Airline</th>
 
-<th>Consultant</th>
+            <th>Consultant</th>
 
-<th>GDS</th>
+            <th>Source</th>
 
-<th>Status</th>
+            <th>Status</th>
 
-<th>Reason</th>
+            <th>Reason</th>
 
-</tr>
+        </tr>
 
-</thead>
+        </thead>
 
-<tbody>
+        <tbody id="resultBody">
 
-<tr>
+        <tr>
 
-<td colspan="9">
+            <td colspan="9">
 
-No comparison has been performed.
+                No records available.
 
-</td>
+            </td>
 
-</tr>
+        </tr>
 
-</tbody>
+        </tbody>
 
-</table>
+    </table>
 
 </section>
 
-<!-- ======================================
+
+<!-- ======================================================
 EXPORT
-======================================= -->
+======================================================= -->
 
-<section
-class="export-panel">
+<section class="export-bar">
 
-<button
-id="excelExport"
-class="primary"
-disabled>
+    <button
+        id="exportExcel"
+        disabled>
 
-Export Excel
+        Export Excel
 
-</button>
+    </button>
 
-<button
-id="csvExport"
-class="primary"
-disabled>
+    <button
+        id="exportCSV"
+        disabled>
 
-Export CSV
+        Export CSV
 
-</button>
+    </button>
 
 </section>
 
-<!-- ======================================
-STATUS BAR
-======================================= -->
 
-<section
-class="status-bar">
+<!-- ======================================================
+STATUS
+======================================================= -->
 
-<span
-id="statusMessage">
+<footer class="status-bar">
 
-Ready
+    <span id="statusText">
 
-</span>
+        Ready
 
-</section>
+    </span>
+
+</footer>
 
 </main>
 
-<!-- ======================================
+
+<!-- ======================================================
 LOADING MODAL
-======================================= -->
+======================================================= -->
 
 <div
-id="loadingModal"
-class="modal hidden">
+    id="loadingModal"
+    class="modal hidden"
+    aria-hidden="true">
 
-<div
-class="modal-content">
+    <div class="modal-content">
 
-<div
-class="loader">
+        <div class="spinner"></div>
+
+        <h2>
+
+            Processing...
+
+        </h2>
+
+        <p>
+
+            Please wait while your reports are being analysed.
+
+        </p>
+
+    </div>
 
 </div>
 
-<h2>
 
-Processing Report...
-
-</h2>
-
-<p>
-
-Please wait while the files are analysed.
-
-</p>
-
-</div>
-
-</div>
-
-<!-- ======================================
-LIBRARIES
-======================================= -->
+<!-- ======================================================
+THIRD PARTY LIBRARIES
+======================================================= -->
 
 <script src="libs/xlsx.full.min.js"></script>
 
 <script src="libs/papaparse.min.js"></script>
 
-<!-- ======================================
-APPLICATION
-======================================= -->
 
-<script src="app.js"></script>
+<!-- ======================================================
+APPLICATION ENTRY POINT
+======================================================= -->
+
+<script
+    type="module"
+    src="js/app.js"></script>
 
 </body>
 
