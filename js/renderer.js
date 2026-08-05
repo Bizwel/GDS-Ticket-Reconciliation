@@ -372,3 +372,177 @@ export function renderSummary(summary) {
     );
 
 }
+/* ============================================================
+   TABLE TABS
+============================================================ */
+
+/**
+ * Activates a result tab.
+ *
+ * @param {string} tabName
+ */
+export function activateTab(tabName) {
+
+    const tabs = document.querySelectorAll(".tab");
+
+    tabs.forEach(tab => {
+
+        if (
+
+            tab.dataset.tab === tabName
+
+        ) {
+
+            tab.classList.add("active");
+
+        }
+
+        else {
+
+            tab.classList.remove("active");
+
+        }
+
+    });
+
+}
+
+
+/* ============================================================
+   SEARCH HIGHLIGHT
+============================================================ */
+
+/**
+ * Highlights matching text.
+ *
+ * @param {string} text
+ * @param {string} search
+ * @returns {string}
+ */
+export function highlightText(text, search) {
+
+    if (!search) {
+
+        return text;
+
+    }
+
+    const escaped = search.replace(
+
+        /[.*+?^${}()|[\]\\]/g,
+
+        "\\$&"
+
+    );
+
+    const regex = new RegExp(
+
+        `(${escaped})`,
+
+        "gi"
+
+    );
+
+    return String(text)
+
+        .replace(
+
+            regex,
+
+            "<mark>$1</mark>"
+
+        );
+
+}
+
+
+/* ============================================================
+   TABLE MESSAGE
+============================================================ */
+
+/**
+ * Shows a temporary message
+ * inside the table.
+ *
+ * @param {string} message
+ */
+export function renderMessage(message) {
+
+    clearTable();
+
+    const tr = document.createElement("tr");
+
+    tr.innerHTML = `
+
+        <td colspan="9"
+
+            class="text-center">
+
+            ${message}
+
+        </td>
+
+    `;
+
+    elements.resultBody.appendChild(tr);
+
+}
+
+
+/* ============================================================
+   RESET
+============================================================ */
+
+/**
+ * Resets the UI.
+ */
+export function resetRenderer() {
+
+    clearTable();
+
+    renderEmpty(
+
+        "No records available."
+
+    );
+
+    renderDashboard({
+
+        gdsRecords:0,
+
+        systemRecords:0,
+
+        missingSystem:0,
+
+        missingGDS:0,
+
+        duplicateGDS:0,
+
+        duplicateSystem:0,
+
+        voidGDS:0,
+
+        voidSystem:0
+
+    });
+
+    renderStatus(
+
+        "Ready"
+
+    );
+
+    hideProgress();
+
+}
+
+
+/* ============================================================
+   EXPORTS
+============================================================ */
+
+export {
+
+    elements
+
+};
