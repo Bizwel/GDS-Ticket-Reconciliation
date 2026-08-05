@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GDS Ticket Reconciliation Tool</title>
+
+    <link rel="stylesheet" href="css/style.css">
+
+    <script src="libs/xlsx.full.min.js"></script>
+    <script src="libs/papaparse.min.js"></script>
+</head>
+
+<body>
+
+<header>
+
+    <h1>GDS Ticket Reconciliation Tool</h1>
+
+    <p>
+        Compare GDS Sales Reports against Back Office System Reports
+    </p>
+
+</header>
+
+<div class="container">
+
+<div class="upload-section">
+
+<div class="upload-card">
+
+<h2>Upload GDS Sales Report</h2>
+
+<input type="file"
+id="gdsFile"
+accept=".xlsx,.xls,.csv">
+
+<p id="gdsName">No file selected</p>
+
+</div>
+
+<div class="upload-card">
+
+<h2>Upload System Report</h2>
+
+<input type="file"
+id="systemFile"
+accept=".xlsx,.xls,.csv">
+
+<p id="systemName">No file selected</p>
+
+</div>
+
+</div>
+
+<button id="compareBtn" disabled>
+
+Compare Tickets
+
+</button>
+
+<div class="dashboard">
+
+<div class="card">
+<h3>GDS Tickets</h3>
+<span id="gdsCount">0</span>
+</div>
+
+<div class="card">
+<h3>System Tickets</h3>
+<span id="systemCount">0</span>
+</div>
+
+<div class="card">
+<h3>VOID Removed</h3>
+<span id="voidCount">0</span>
+</div>
+
+<div class="card">
+<h3>Missing Tickets</h3>
+<span id="missingCount">0</span>
+</div>
+
+</div>
+
+<div class="search">
+
+<input
+type="text"
+id="searchInput"
+placeholder="Search Ticket">
+
+</div>
+
+<table id="resultsTable">
+
+<thead>
+
+<tr>
+
+<th>Ticket</th>
+
+<th>Passenger</th>
+
+<th>Issue Date</th>
+
+<th>Airline</th>
+
+<th>Consultant</th>
+
+<th>GDS</th>
+
+</tr>
+
+</thead>
+
+<tbody>
+
+<tr>
+
+<td colspan="6">
+
+No results yet
+
+</td>
+
+</tr>
+
+</tbody>
+
+</table>
+
+<div class="export">
+
+<button disabled>
+
+Export Excel
+
+</button>
+
+<button disabled>
+
+Export CSV
+
+</button>
+
+</div>
+
+</div>
+
+<script src="js/app.js"></script>
+
+</body>
+</html>
