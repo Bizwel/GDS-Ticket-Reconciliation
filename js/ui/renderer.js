@@ -401,28 +401,46 @@ export function renderTableHeader(){
 
     clear(headerRow);
 
-    TABLE_COLUMNS.forEach(column=>{
+  TABLE_COLUMNS.forEach(column => {
 
-        const th = document.createElement("th");
+    const th = document.createElement("th");
 
-        th.textContent = column.label;
+    th.textContent = column.label;
 
-        headerRow.appendChild(th);
+    // NEW
+    if (column.width) {
 
-    });
+        th.style.width = column.width;
+
+    }
+
+    if (column.align) {
+
+        th.style.textAlign = column.align;
+
+    }
+
+    headerRow.appendChild(th);
+
+});
 
 }
 /* ============================================================================
    CELL
 ============================================================================ */
 
-function buildCell(value){
+function buildCell(value, column){
 
     const td = document.createElement("td");
 
-    td.textContent =
+    td.textContent = value ?? "";
 
-        value ?? "";
+    // NEW
+    if (column.align) {
+
+        td.style.textAlign = column.align;
+
+    }
 
     return td;
 
@@ -459,7 +477,12 @@ function buildRow(item){
 
         tr.appendChild(
 
-            buildCell(value)
+            buildCell(
+                
+                value,
+                
+                column
+            )
 
         );
 
