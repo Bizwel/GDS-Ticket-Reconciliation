@@ -191,6 +191,38 @@ export const COLUMN_ALIASES = Object.freeze({
 
 });
 
+/*=============================================================================
+TABLE COLUMNS
+===============================================================================*/
+
+export const TABLE_COLUMNS = Object.freeze([
+
+    {
+        key: "ticket",
+        label: "Ticket Number"
+    },
+
+    {
+        key: "statusLabel",
+        label: "Status"
+    },
+
+    {
+        key: "gdsCount",
+        label: "GDS"
+    },
+
+    {
+        key: "systemCount",
+        label: "System"
+    },
+
+    {
+        key: "totalOccurrences",
+        label: "Total"
+    }
+
+]);
 
 /* ============================================================================
    STATUS VALUES
