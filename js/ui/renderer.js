@@ -426,19 +426,84 @@ export function renderTableHeader(){
 
 }
 /* ============================================================================
-   CELL
+   VALUE FORMATTER
 ============================================================================ */
 
-function buildCell(value, column){
+/**
+ * Formats a value using the column formatter.
+ *
+ * @param {*} value
+ * @param {Object} column
+ * @param {Object} record
+ * @returns {*}
+ */
+function formatValue(value, column, record) {
+
+    // No formatter defined
+    if (!column.formatter) {
+
+        return value ?? "";
+
+    }
+
+    // Custom formatter function
+    if (typeof column.formatter === "function") {
+
+        return column.formatter(value, record, column);
+
+    }
+
+    // Fallback
+    return value ?? "";
+
+}
+
+/* ============================================================================
+   CELL
+============================================================================ */
+function buildCell(value, column, record) {
 
     const td = document.createElement("td");
 
-    td.textContent = value ?? "";
+    if (column.width) {
 
-    // NEW
+        td.style.width = column.width;
+
+    }
+
     if (column.align) {
 
         td.style.textAlign = column.align;
+
+    }
+
+    const formatted = formatValue(
+
+        value,
+
+        column,
+
+        record
+
+    );
+
+    if (formatted instanceof HTMLElement) {
+
+        td.appendChild(formatted);
+
+    } else if (
+
+        typeof formatted === "string" &&
+
+        formatted.trim().startsWith("<")
+
+    ) {
+
+        td.innerHTML = formatted;
+
+    } else {
+
+        td.textContent = formatted ?? "";
 
     }
 
@@ -521,15 +586,17 @@ export function renderResults(records){
 
     }
 
-    records.forEach(record=>{
+  visibleRecords(records)
 
-        elements.tableBody.appendChild(
+.forEach(record=>{
 
-            buildRow(record)
+    elements.tableBody.appendChild(
 
-        );
+        buildRow(record)
 
-    });
+    );
+
+});
 
     text(
 
@@ -567,16 +634,153 @@ export const TABLE_COLUMNS = Object.freeze([
 
     },
 
-    {
+   {
+    key: "status",
+    label: "Status",
+    width: "170px",
+    align: "center",
+    formatter: (_, record) => renderStatusBadge(record.status)
+}
 
-        key: "statusLabel",
+]);
+/* ============================================================================
+   PAGINATION
+============================================================================ */
 
-        label: "Status",
+const paginationState = {
 
-        width: "170px",
+    page: 1,
 
-        align: "center"
+    pageSize: 100
+
+};
+
+export function setCurrentPage(page){
+
+    paginationState.page =
+
+        Math.max(1,page);
+
+}
+
+export function getCurrentPage(){
+
+    return paginationState.page;
+
+}
+
+export function setPageSize(size){
+
+    paginationState.pageSize =
+
+        Number(size);
+
+}
+
+export function getPageSize(){
+
+    return paginationState.pageSize;
+
+}
+
+function visibleRecords(records){
+
+    const start =
+
+        (paginationState.page-1)
+
+        *
+
+        paginationState.pageSize;
+
+    return records.slice(
+
+        start,
+
+        start+
+
+        paginationState.pageSize
+
+    );
+
+}
+
+function totalPages(records){
+
+    return Math.max(
+
+        1,
+
+        Math.ceil(
+
+            records.length/
+
+            paginationState.pageSize
+
+        )
+
+    );
+
+}
+
+export function renderPagination(records){
+
+    clear(
+
+        elements.pagination
+
+    );
+
+    const pages =
+
+        totalPages(records);
+
+    for(
+
+        let i=1;
+
+        i<=pages;
+
+        i++
+
+    ){
+
+        const button =
+
+            document.createElement("button");
+
+        button.textContent=i;
+
+        if(
+
+            i===paginationState.page
+
+        ){
+
+            button.classList.add(
+
+                "active"
+
+            );
+
+        }
+
+        button.onclick=()=>{
+
+            setCurrentPage(i);
+
+            renderResults(records);
+
+            renderPagination(records);
+
+        };
+
+        elements.pagination.appendChild(
+
+            button
+
+        );
 
     }
 
-]);
+}
