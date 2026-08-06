@@ -171,91 +171,218 @@ function createReconciliationItem({
  * @param {Map<string, Array<Object>>} systemIndex
  * @param {Object} result
  */
-function compareIndexes(
-    gdsIndex,
-    systemIndex,
-    result
-) {
+/* ============================================================================
+   MATCHED
+============================================================================ */
 
-    /* ------------------------------------------------------------------------
-       GDS -> SYSTEM
-    ------------------------------------------------------------------------ */
+function processMatched(
+
+    ticket,
+
+    gdsRecords,
+
+    systemRecords,
+
+    result
+
+){
+
+    const item = createReconciliationItem({
+
+        ticket,
+
+        status: RESULT_STATUS.MATCHED,
+
+        gds: gdsRecords,
+
+        system: systemRecords
+
+    });
+
+    item.gdsCount = gdsRecords.length;
+
+    item.systemCount = systemRecords.length;
+
+    item.isDuplicate =
+
+        item.gdsCount > 1 ||
+
+        item.systemCount > 1;
+
+    result.gdsMatched.push(item);
+
+    result.records.push(item);
+
+}
+function compareIndexes(
+
+    gdsIndex,
+
+    systemIndex,
+
+    result
+
+){
 
     gdsIndex.forEach((gdsRecords, ticket) => {
 
         result.diagnostics.comparedTickets++;
 
-        if (systemIndex.has(ticket)) {
+        if(systemIndex.has(ticket)){
 
-            const systemRecords = systemIndex.get(ticket);
-
-           const item = {
-
-    ticket,
-
-   status: RESULT_STATUS.MATCHED;
-
-    gds: gdsRecords,
-
-    system: systemRecords
-
-};
-
-result.gdsMatched.push(item);
-
-result.records.push(item);
-
-        } else {
-
-          const item = createReconciliationItem({
-
-    ticket,
-
-    status: RESULT_STATUS.MISSING_IN_SYSTEM,
-
-    records: gdsRecords
-
-});
-
-result.gdsMissingInSystem.push(item);
-
-result.records.push(item);
-
-const item = {
-
-    ticket,
-
-    status: "MISSING_IN_GDS",
-
-    records: systemRecords
-
-};
-
-   result.systemMissingInGDS.push(item);
-   
-   result.records.push(item);
-
-});
-
-    /* ------------------------------------------------------------------------
-       SYSTEM -> GDS
-    ------------------------------------------------------------------------ */
-
-    systemIndex.forEach((systemRecords, ticket) => {
-
-        if (!gdsIndex.has(ticket)) {
-
-            result.systemMissingInGDS.push({
+            processMatched(
 
                 ticket,
 
-                records: systemRecords
+                gdsRecords,
 
-            });
+                systemIndex.get(ticket),
+
+                result
+
+            );
+
+        }else{
+
+            processMissingSystem(
+
+                ticket,
+
+                gdsRecords,
+
+                result
+
+            );
 
         }
 
     });
+
+    systemIndex.forEach((systemRecords, ticket) => {
+
+        if(!gdsIndex.has(ticket)){
+
+            processMissingGDS(
+
+                ticket,
+
+                systemRecords,
+
+                result
+
+            );
+
+        }
+
+    });
+
+}
+
+ /* ============================================================================
+   MISSING IN SYSTEM
+============================================================================ */
+
+function processMissingSystem(
+
+    ticket,
+
+    records,
+
+    result
+
+){
+
+    const item = createReconciliationItem({
+
+        ticket,
+
+        status: RESULT_STATUS.MISSING_IN_SYSTEM,
+
+        records
+
+    });
+
+    item.gdsCount = records.length;
+
+    item.systemCount = 0;
+
+    item.totalOccurrences =
+    item.gdsCount +
+    item.systemCount;
+
+    item.isDuplicate =
+
+        records.length > 1;
+
+    result.records.sort(
+
+    (a,b)=>
+
+        a.ticket.localeCompare(
+
+            b.ticket
+
+        )
+
+);
+
+    result.gdsMissingInSystem.push(item);
+
+    result.records.push(item);
+
+}
+
+   /* ============================================================================
+   MISSING IN GDS
+============================================================================ */
+
+function processMissingGDS(
+
+    ticket,
+
+    records,
+
+    result
+
+){
+
+    const item = createReconciliationItem({
+
+        ticket,
+
+        status: RESULT_STATUS.MISSING_IN_GDS,
+
+        records
+
+    });
+
+    item.gdsCount = 0;
+
+    item.systemCount = records.length;
+    
+    item.totalOccurrences =
+    item.gdsCount +
+    item.systemCount;
+
+    item.isDuplicate =
+
+        records.length > 1;
+
+    result.records.sort(
+
+    (a,b)=>
+
+        a.ticket.localeCompare(
+
+            b.ticket
+
+        )
+
+);
+
+    result.systemMissingInGDS.push(item);
+
+    result.records.push(item);
 
 }
 /* ============================================================================
