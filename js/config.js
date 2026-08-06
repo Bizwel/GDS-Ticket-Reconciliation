@@ -1,47 +1,54 @@
 /**
- * ============================================================
+ * ============================================================================
  * GDS Ticket Reconciliation Tool
- * File: js/config.js
- * Description:
- * Central configuration and application constants.
- * ============================================================
+ * Version : 2.0.0
+ * File    : js/config.js
+ * Author  : Business Well Technologies
+ *
+ * Application configuration and global constants.
+ * ============================================================================
  */
 
-/* ============================================================
+/* ============================================================================
    APPLICATION
-============================================================ */
+============================================================================ */
 
-export const APP = {
+export const APP = Object.freeze({
 
     NAME: "GDS Ticket Reconciliation Tool",
 
-    VERSION: "1.0.0",
+    VERSION: "2.0.0",
 
-    AUTHOR: "Business Well Technologies"
+    AUTHOR: "Business Well Technologies",
 
-};
+    DESCRIPTION:
+        "GDS Sales Report Reconciliation Tool",
 
+    BUILD_DATE: "2026-08-05"
 
-/* ============================================================
-   SUPPORTED FILE TYPES
-============================================================ */
-
-export const FILE_TYPES = [
-
-    ".csv",
-
-    ".xls",
-
-    ".xlsx"
-
-];
+});
 
 
-/* ============================================================
+/* ============================================================================
+   FILE SUPPORT
+============================================================================ */
+
+export const FILE_TYPES = Object.freeze({
+
+    EXCEL: ["xls", "xlsx"],
+
+    CSV: ["csv"],
+
+    ALL: ["xls", "xlsx", "csv"]
+
+});
+
+
+/* ============================================================================
    GDS TYPES
-============================================================ */
+============================================================================ */
 
-export const GDS_TYPES = Object.freeze({
+export const GDS = Object.freeze({
 
     AMADEUS: "Amadeus",
 
@@ -49,14 +56,50 @@ export const GDS_TYPES = Object.freeze({
 
     SABRE: "Sabre",
 
-    SYSTEM: "System"
+    SYSTEM: "System",
+
+    UNKNOWN: "Unknown"
 
 });
 
 
-/* ============================================================
+/* ============================================================================
+   REPORT SIGNATURES
+   Used during automatic report detection.
+============================================================================ */
+
+export const REPORT_SIGNATURES = Object.freeze({
+
+    [GDS.AMADEUS]: {
+
+        ticket: ["no"],
+
+        required: ["no"]
+
+    },
+
+    [GDS.GALILEO]: {
+
+        ticket: ["number"],
+
+        required: ["number"]
+
+    },
+
+    [GDS.SABRE]: {
+
+        ticket: ["ticket #"],
+
+        required: ["ticket #"]
+
+    }
+
+});
+
+
+/* ============================================================================
    COLUMN ALIASES
-============================================================ */
+============================================================================ */
 
 export const COLUMN_ALIASES = Object.freeze({
 
@@ -149,24 +192,28 @@ export const COLUMN_ALIASES = Object.freeze({
 });
 
 
-/* ============================================================
+/* ============================================================================
    STATUS VALUES
-============================================================ */
+============================================================================ */
 
 export const STATUS = Object.freeze({
 
-    VOID: "VOID"
+    VOID: "VOID",
+
+    ACTIVE: "ACTIVE",
+
+    UNKNOWN: ""
 
 });
 
 
-/* ============================================================
-   FILTER OPTIONS
-============================================================ */
+/* ============================================================================
+   RESULT VIEWS
+============================================================================ */
 
-export const FILTERS = Object.freeze({
+export const RESULT_TYPES = Object.freeze({
 
-    ALL: "all",
+    MATCHED: "matched",
 
     MISSING_SYSTEM: "missing-system",
 
@@ -179,73 +226,138 @@ export const FILTERS = Object.freeze({
 });
 
 
-/* ============================================================
+/* ============================================================================
    EXPORT SHEETS
-============================================================ */
+============================================================================ */
 
 export const EXPORT_SHEETS = Object.freeze({
 
     SUMMARY: "Summary",
 
+    MATCHED: "Matched",
+
     MISSING_SYSTEM: "Missing in System",
 
     MISSING_GDS: "Missing in GDS",
 
-    DUPLICATES: "Duplicates",
+    DUPLICATE_GDS: "Duplicate GDS",
 
-    VOID: "VOID Records"
+    DUPLICATE_SYSTEM: "Duplicate System",
 
-});
+    VOID_GDS: "VOID GDS",
 
+    VOID_SYSTEM: "VOID System",
 
-/* ============================================================
-   DASHBOARD DEFAULTS
-============================================================ */
-
-export const DASHBOARD_DEFAULTS = Object.freeze({
-
-    gdsRecords: 0,
-
-    systemRecords: 0,
-
-    voidRecords: 0,
-
-    duplicateRecords: 0,
-
-    missingSystem: 0,
-
-    missingGDS: 0
+    AUDIT: "Audit Log"
 
 });
 
 
-/* ============================================================
-   NORMALIZATION RULES
-============================================================ */
+/* ============================================================================
+   NORMALIZATION
+============================================================================ */
 
 export const NORMALIZATION = Object.freeze({
 
     AIRLINE_PREFIX_LENGTH: 3,
 
-    TICKET_LENGTH: 10,
+    NORMALIZED_TICKET_LENGTH: 10,
 
-    REMOVE_EXCHANGE_SUFFIX: true,
+    REMOVE_PREFIX: true,
 
-    REMOVE_SPACES: true
+    REMOVE_SUFFIX: true,
+
+    REMOVE_SPACES: true,
+
+    UPPERCASE_TEXT: true
 
 });
 
 
-/* ============================================================
-   REPORT SETTINGS
-============================================================ */
+/* ============================================================================
+   PARSER
+============================================================================ */
 
-export const REPORT = Object.freeze({
+export const PARSER = Object.freeze({
 
     HEADER_SCAN_LIMIT: 50,
 
-    EMPTY_CELL: "",
+    EMPTY_VALUE: "",
 
-    DATE_FORMAT: "yyyy-mm-dd"
+    MAX_FILE_SIZE_MB: 25
 
 });
+
+
+/* ============================================================================
+   SEARCH
+============================================================================ */
+
+export const SEARCHABLE_FIELDS = Object.freeze([
+
+    "ticket",
+
+    "originalTicket",
+
+    "passenger",
+
+    "consultant",
+
+    "airline",
+
+    "status",
+
+    "reason"
+
+]);
+
+
+/* ============================================================================
+   DASHBOARD
+============================================================================ */
+
+export const DASHBOARD = Object.freeze({
+
+    DEFAULTS: {
+
+        gdsRecords: 0,
+
+        systemRecords: 0,
+
+        matched: 0,
+
+        missingSystem: 0,
+
+        missingGDS: 0,
+
+        duplicateGroups: 0,
+
+        voidRecords: 0,
+
+        processingTime: 0
+
+    }
+
+});
+
+
+/* ============================================================================
+   UI
+============================================================================ */
+
+export const UI = Object.freeze({
+
+    DATE_FORMAT: "yyyy-MM-dd",
+
+    PAGE_SIZE: 100,
+
+    DEFAULT_VIEW: RESULT_TYPES.MISSING_SYSTEM
+
+});
+
+
+/* ============================================================================
+   DEBUG
+============================================================================ */
+
+export const DEBUG = false;
