@@ -356,6 +356,20 @@ function processRows(rows){
 
         );
 
+});
+
+    dataset.duplicateGroups.forEach(group => {
+
+    group.records.forEach(record => {
+
+        record.duplicate = true;
+
+        record.duplicateGroup = group.ticket;
+
+    });
+
+
+
     dataset.diagnostics.duplicateGroups =
 
         dataset.duplicateGroups.length;
