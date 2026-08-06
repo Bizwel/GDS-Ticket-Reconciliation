@@ -201,35 +201,40 @@ export const TABLE_COLUMNS = Object.freeze([
         key: "ticket",
         label: "Ticket Number",
         width: "180px",
-        align: "left"
+        align: "left",
+        formatter: "text"
     },
 
     {
         key: "statusLabel",
         label: "Status",
-        width: "180px",
-        align: "center"
+        width: "170px",
+        align: "center",
+        formatter: "badge"
     },
 
     {
         key: "gdsCount",
         label: "GDS",
         width: "80px",
-        align: "center"
+        align: "center",
+        formatter: "number"
     },
 
     {
         key: "systemCount",
         label: "System",
         width: "80px",
-        align: "center"
+        align: "center",
+        formatter: "number"
     },
 
     {
         key: "totalOccurrences",
         label: "Total",
         width: "80px",
-        align: "center"
+        align: "center",
+        formatter: "number"
     }
 
 ]);
