@@ -199,31 +199,40 @@ export const TABLE_COLUMNS = Object.freeze([
 
     {
         key: "ticket",
-        label: "Ticket Number"
+        label: "Ticket Number",
+        width: "180px",
+        align: "left"
     },
 
     {
         key: "statusLabel",
-        label: "Status"
+        label: "Status",
+        width: "180px",
+        align: "center"
     },
 
     {
         key: "gdsCount",
-        label: "GDS"
+        label: "GDS",
+        width: "80px",
+        align: "center"
     },
 
     {
         key: "systemCount",
-        label: "System"
+        label: "System",
+        width: "80px",
+        align: "center"
     },
 
     {
         key: "totalOccurrences",
-        label: "Total"
+        label: "Total",
+        width: "80px",
+        align: "center"
     }
 
 ]);
-
 /* ============================================================================
    STATUS VALUES
 ============================================================================ */
