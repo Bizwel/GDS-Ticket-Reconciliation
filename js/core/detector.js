@@ -1,280 +1,245 @@
 /**
- * ============================================================
+ * ============================================================================
  * GDS Ticket Reconciliation Tool
- * File: js/detector.js
- * Description:
- * Detects report type, header row and column mappings.
- * ============================================================
+ * Version : 2.0.0
+ * File    : js/detector.js
+ *
+ * Detects report structure and maps columns.
+ * ============================================================================
  */
 
-import { COLUMN_ALIASES, GDS_TYPES, REPORT } from "./config.js";
-import { cleanText, normalizeText, findColumn } from "./utils.js";
+import {
 
-/* ============================================================
-   HEADER DETECTION
-============================================================ */
+    GDS,
+    COLUMN_ALIASES,
+    REPORT_SIGNATURES,
+    PARSER
+
+} from "./config.js";
+
+import {
+
+    normalizeText
+
+} from "./utils/helpers.js";
+
+
+/* ============================================================================
+   HEADER SEARCH
+============================================================================ */
 
 /**
- * Detects the header row by scoring the first N rows.
+ * Finds the header row by scanning the first
+ * configured number of rows.
  *
- * @param {Array[]} rows
+ * @param {Array<Array>} rows
  * @returns {number}
  */
-export function detectHeaderRow(rows) {
+export function detectHeaderRow(rows){
 
-    let bestRow = -1;
-    let bestScore = 0;
+    const limit = Math.min(
 
-    const scanLimit = Math.min(
         rows.length,
-        REPORT.HEADER_SCAN_LIMIT
+
+        PARSER.HEADER_SCAN_LIMIT
+
     );
 
-    for (let rowIndex = 0; rowIndex < scanLimit; rowIndex++) {
+    for(let rowIndex = 0; rowIndex < limit; rowIndex++){
 
         const row = rows[rowIndex];
 
-        if (!Array.isArray(row)) {
+        if(!Array.isArray(row)){
+
             continue;
+
         }
 
-        let score = 0;
+        const normalized = row.map(normalizeText);
 
-        row.forEach(cell => {
+        if(
 
-            const value = normalizeText(cell);
+            normalized.some(value =>
 
-            Object.values(COLUMN_ALIASES).forEach(aliasList => {
+                COLUMN_ALIASES.ticket.includes(value)
 
-                if (aliasList.includes(value)) {
-                    score++;
-                }
+            )
 
-            });
+        ){
 
-        });
-
-        if (score > bestScore) {
-
-            bestScore = score;
-            bestRow = rowIndex;
+            return rowIndex;
 
         }
 
     }
 
-    if (bestRow === -1) {
-
-        throw new Error(
-            "Unable to detect the report header row."
-        );
-
-    }
-
-    return bestRow;
+    return -1;
 
 }
 
-/* ============================================================
-   REPORT TYPE DETECTION
-============================================================ */
+
+/* ============================================================================
+   COLUMN MAP
+============================================================================ */
 
 /**
- * Determines the report type.
+ * Maps logical field names to
+ * actual spreadsheet column indexes.
  *
- * @param {string[]} headers
+ * @param {Array<string>} headers
+ * @returns {Object}
+ */
+export function mapColumns(headers){
+
+    const map = {};
+
+    Object.entries(COLUMN_ALIASES).forEach(
+
+        ([field, aliases]) => {
+
+            const index = headers.findIndex(header =>
+
+                aliases.includes(
+
+                    normalizeText(header)
+
+                )
+
+            );
+
+            map[field] = index;
+
+        }
+
+    );
+
+    return map;
+
+}
+
+
+/* ============================================================================
+   PROVIDER DETECTION
+============================================================================ */
+
+/**
+ * Detects report provider.
+ *
+ * @param {Array<string>} headers
  * @returns {string}
  */
-export function detectReportType(headers) {
+export function detectProvider(headers){
 
     const normalized = headers.map(normalizeText);
 
-    let sabreScore = 0;
-    let galileoScore = 0;
-    let amadeusScore = 0;
+    for(const [provider, config] of Object.entries(REPORT_SIGNATURES)){
 
-    normalized.forEach(header => {
+        const matched = config.required.every(required =>
 
-        if (header === "ticket #") {
-            sabreScore++;
+            normalized.includes(required)
+
+        );
+
+        if(matched){
+
+            return provider;
+
         }
 
-        if (header === "number") {
-            galileoScore++;
-        }
-
-        if (header === "no") {
-            amadeusScore++;
-        }
-
-    });
-
-    if (
-        sabreScore >= galileoScore &&
-        sabreScore >= amadeusScore &&
-        sabreScore > 0
-    ) {
-        return GDS_TYPES.SABRE;
     }
 
-    if (
-        galileoScore >= sabreScore &&
-        galileoScore >= amadeusScore &&
-        galileoScore > 0
-    ) {
-        return GDS_TYPES.GALILEO;
-    }
-
-    if (
-        amadeusScore > 0
-    ) {
-        return GDS_TYPES.AMADEUS;
-    }
-
-    return GDS_TYPES.SYSTEM;
+    return GDS.UNKNOWN;
 
 }
 
-/* ============================================================
-   COLUMN MAP
-============================================================ */
+
+/* ============================================================================
+   VALIDATION
+============================================================================ */
 
 /**
- * Builds a dynamic column map.
+ * Validates that mandatory columns exist.
  *
- * @param {string[]} headers
- * @returns {Object}
+ * @param {Object} columnMap
+ * @returns {{valid:boolean,message:string}}
  */
-export function buildColumnMap(headers) {
+export function validateColumns(columnMap){
 
-    return {
+    if(columnMap.ticket < 0){
 
-        ticket:
-            findColumn(
-                headers,
-                COLUMN_ALIASES.ticket
-            ),
+        return{
 
-        status:
-            findColumn(
-                headers,
-                COLUMN_ALIASES.status
-            ),
+            valid:false,
 
-        passenger:
-            findColumn(
-                headers,
-                COLUMN_ALIASES.passenger
-            ),
+            message:"Ticket column not found."
 
-        issueDate:
-            findColumn(
-                headers,
-                COLUMN_ALIASES.issueDate
-            ),
+        };
 
-        airline:
-            findColumn(
-                headers,
-                COLUMN_ALIASES.airline
-            ),
+    }
 
-        consultant:
-            findColumn(
-                headers,
-                COLUMN_ALIASES.consultant
-            )
+    return{
+
+        valid:true,
+
+        message:""
 
     };
 
 }
 
-/* ============================================================
-   VALIDATION
-============================================================ */
+
+/* ============================================================================
+   REPORT DETECTION
+============================================================================ */
 
 /**
- * Validates mandatory columns.
+ * Detects report metadata.
  *
- * @param {Object} columnMap
+ * @param {Array<Array>} rows
+ * @returns {Object}
  */
-export function validateColumnMap(columnMap) {
+export function detectReport(rows){
 
-    if (columnMap.ticket === -1) {
+    const headerRow = detectHeaderRow(rows);
 
-        throw new Error(
-            "Unable to locate the Ticket Number column."
-        );
+    if(headerRow < 0){
+
+        return{
+
+            valid:false,
+
+            message:"Unable to locate the report header row."
+
+        };
 
     }
 
-}
+    const headers = rows[headerRow];
 
-/* ============================================================
-   SCHEMA
-============================================================ */
+    const provider = detectProvider(headers);
 
-/**
- * Builds the report schema.
- *
- * @param {Array[]} rows
- * @returns {Object}
- */
-export function buildSchema(rows) {
+    const columns = mapColumns(headers);
 
-    const headerRow =
-        detectHeaderRow(rows);
+    const validation = validateColumns(columns);
 
-    const headers =
-        rows[headerRow].map(cleanText);
+    if(!validation.valid){
 
-    const reportType =
-        detectReportType(headers);
+        return validation;
 
-    const columnMap =
-        buildColumnMap(headers);
+    }
 
-    validateColumnMap(columnMap);
+    return{
 
-    return {
+        valid:true,
 
-        reportType,
+        provider,
 
         headerRow,
 
         headers,
 
-        columnMap
+        columns
 
     };
-
-}
-
-/* ============================================================
-   LOG
-============================================================ */
-
-/**
- * Writes schema information to the console.
- *
- * @param {Object} schema
- */
-export function logSchema(schema) {
-
-    console.group("Detected Report");
-
-    console.log(
-        "Report Type:",
-        schema.reportType
-    );
-
-    console.log(
-        "Header Row:",
-        schema.headerRow
-    );
-
-    console.table(schema.columnMap);
-
-    console.groupEnd();
 
 }
