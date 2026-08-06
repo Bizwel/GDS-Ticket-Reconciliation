@@ -249,7 +249,7 @@ function processRows(rows){
 
  }
 
-      const {
+      dataset.report = {
 
     provider,
 
@@ -259,7 +259,7 @@ function processRows(rows){
 
     headerRow
 
-} = report;
+};
 
     dataset.diagnostics.provider = provider;
 
