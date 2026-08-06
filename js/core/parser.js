@@ -432,7 +432,13 @@ function extractFields(row, columnMap){
  */
 export async function parseFile(file){
 
-    const rows = await loadRows(file);
+    const {
+
+    rows,
+
+    sheetName
+
+} = await loadRows(file);
 
     if(!rows.length){
 
@@ -444,9 +450,11 @@ export async function parseFile(file){
 
     }
 
-    const dataset = processRows(rows);
+   const dataset = processRows(rows);
 
     dataset.reportName = file.name;
+
+    dataset.sheetName = sheetName;
 
     return dataset;
 
