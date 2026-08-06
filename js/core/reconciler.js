@@ -9,6 +9,11 @@
  */
 
 import { log } from "./utils/logger.js";
+import {
+
+    RESULT_STATUS
+
+} from "./config.js";
 
 /* ============================================================================
    RESULT FACTORY
@@ -142,7 +147,7 @@ function compareIndexes(
 
     ticket,
 
-    status: "MATCHED",
+   status: RESULT_STATUS.MATCHED;
 
     gds: gdsRecords,
 
