@@ -9,9 +9,12 @@
  */
 
 import { log } from "./utils/logger.js";
+
 import {
 
-    RESULT_STATUS
+    RESULT_STATUS,
+
+    STATUS_LABELS
 
 } from "./config.js";
 
@@ -115,6 +118,49 @@ function buildTicketIndex(records) {
 
 }
 /* ============================================================================
+   RECONCILIATION ITEM FACTORY
+============================================================================ */
+
+/**
+ * Creates a reconciliation item.
+ *
+ * @param {Object} options
+ * @returns {Object}
+ */
+function createReconciliationItem({
+
+    ticket,
+
+    status,
+
+    gds = [],
+
+    system = [],
+
+    records = []
+
+}){
+
+    return {
+
+        ticket,
+
+        status,
+
+        statusLabel:
+
+            STATUS_LABELS[status],
+
+        gds,
+
+        system,
+
+        records
+
+    };
+
+}
+/* ============================================================================
    MATCHING ENGINE
 ============================================================================ */
 
@@ -161,15 +207,19 @@ result.records.push(item);
 
         } else {
 
-            const item = {
+          const item = createReconciliationItem({
 
     ticket,
 
-    status: "MISSING_IN_SYSTEM",
+    status: RESULT_STATUS.MISSING_IN_SYSTEM,
 
     records: gdsRecords
 
-};
+});
+
+result.gdsMissingInSystem.push(item);
+
+result.records.push(item);
 
 const item = {
 
@@ -218,6 +268,9 @@ function buildStatistics(
     systemDataset
 ) {
 
+    result.statistics.totalResults =
+    result.records.length;
+    
     result.statistics.gdsRecords =
         gdsDataset.records.length;
 
