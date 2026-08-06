@@ -375,3 +375,145 @@ export function renderDiagnostics(diagnostics){
     );
 
 }
+/* ============================================================================
+   TABLE HEADER
+============================================================================ */
+
+import {
+
+    TABLE_COLUMNS
+
+} from "./config.js";
+
+
+/**
+ * Builds the table header.
+ */
+export function renderTableHeader(){
+
+    const headerRow = byId("resultsHeader");
+
+    if(!headerRow){
+
+        return;
+
+    }
+
+    clear(headerRow);
+
+    TABLE_COLUMNS.forEach(column=>{
+
+        const th = document.createElement("th");
+
+        th.textContent = column.label;
+
+        headerRow.appendChild(th);
+
+    });
+
+}
+/* ============================================================================
+   CELL
+============================================================================ */
+
+function buildCell(value){
+
+    const td = document.createElement("td");
+
+    td.textContent =
+
+        value ?? "";
+
+    return td;
+
+}
+/* ============================================================================
+   ROW
+============================================================================ */
+
+function buildRow(item){
+
+    const tr = document.createElement("tr");
+
+    TABLE_COLUMNS.forEach(column=>{
+
+        let value = item[column.key];
+
+        if(column.key==="statusLabel"){
+
+            const td = document.createElement("td");
+
+            td.innerHTML =
+
+                renderStatusBadge(
+
+                    item.status
+
+                );
+
+            tr.appendChild(td);
+
+            return;
+
+        }
+
+        tr.appendChild(
+
+            buildCell(value)
+
+        );
+
+    });
+
+    if(item.isDuplicate){
+
+        tr.classList.add(
+
+            "duplicate-row"
+
+        );
+
+    }
+
+    return tr;
+
+}
+/* ============================================================================
+   GRID
+============================================================================ */
+
+export function renderResults(records){
+
+    clear(
+
+        elements.tableBody
+
+    );
+
+    if(!records.length){
+
+        renderEmptyTable();
+
+        return;
+
+    }
+
+    records.forEach(record=>{
+
+        elements.tableBody.appendChild(
+
+            buildRow(record)
+
+        );
+
+    });
+
+    text(
+
+        elements.resultCount,
+
+        records.length
+
+    );
+
+}
