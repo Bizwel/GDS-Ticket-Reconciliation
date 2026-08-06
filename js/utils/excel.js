@@ -237,27 +237,45 @@ export function openCSV(file){
  * @param {File} file
  * @returns {Promise<Array[]>}
  */
-export async function loadRows(file){
+export async function loadRows(file, sheetName = null){
 
-    const extension =
+    const extension = getExtension(file);
 
-        getExtension(file);
+    if(extension === "csv"){
 
-    if(extension==="csv"){
+        return {
 
-        return await openCSV(file);
+            rows: await openCSV(file),
+
+            sheetName: "CSV",
+
+            workbook: null
+
+        };
 
     }
 
-    const workbook =
+    const workbook = await openWorkbook(file);
 
-        await openWorkbook(file);
+    const selectedSheet =
 
-    return firstSheetRows(
+        sheetName ||
 
-        workbook
+        workbook.SheetNames[0];
 
-    );
+    return {
+
+        workbook,
+
+        sheetName: selectedSheet,
+
+        rows: worksheetToRows(
+
+            workbook.Sheets[selectedSheet]
+
+        )
+
+    };
 
 }
 
