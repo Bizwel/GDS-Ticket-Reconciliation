@@ -1,233 +1,287 @@
 /**
- * ============================================================
+ * ============================================================================
  * GDS Ticket Reconciliation Tool
- * File: js/renderer.js
- * Description:
- * Handles all UI rendering.
- * ============================================================
+ * Version : 2.0.0
+ * File    : js/renderer.js
+ *
+ * UI Rendering Engine
+ * ============================================================================
  */
 
-/* ============================================================
+import {
+
+    byId,
+    clear,
+    text
+
+} from "./utils/dom.js";
+
+import {
+
+    STATUS_LABELS
+
+} from "./config.js";
+
+import {
+
+    log
+
+} from "./utils/logger.js";
+
+
+/* ============================================================================
    DOM CACHE
-============================================================ */
+============================================================================ */
 
-const elements = {
+const elements = {};
 
-    gdsCount:
 
-        document.getElementById("gdsCount"),
+/**
+ * Cache all required DOM elements.
+ */
+export function initializeRenderer(){
 
-    systemCount:
+    elements.gdsFile =
+        byId("gdsFile");
 
-        document.getElementById("systemCount"),
+    elements.systemFile =
+        byId("systemFile");
 
-    voidCount:
+    elements.compareButton =
+        byId("compareBtn");
 
-        document.getElementById("voidCount"),
+    elements.exportExcel =
+        byId("exportExcel");
 
-    duplicateCount:
+    elements.exportCSV =
+        byId("exportCSV");
 
-        document.getElementById("duplicateCount"),
+    elements.search =
+        byId("searchBox");
 
-    missingSystemCount:
+    elements.statusFilter =
+        byId("statusFilter");
 
-        document.getElementById("missingSystemCount"),
+    /* Dashboard Cards */
 
-    missingGDSCount:
+   elements.dashboard = {
 
-        document.getElementById("missingGDSCount"),
+    totalGDS: byId("totalGDS"),
 
-    resultBody:
+    totalSystem: byId("totalSystem"),
 
-        document.getElementById("resultBody"),
+    totalMatched: byId("totalMatched"),
 
-    statusText:
+    totalMissingSystem: byId("totalMissingSystem"),
 
-        document.getElementById("statusText"),
+    totalMissingGDS: byId("totalMissingGDS"),
 
-    progressFill:
+    totalDuplicates: byId("totalDuplicates"),
 
-        document.getElementById("progressFill"),
+    totalVoid: byId("totalVoid"),
 
-    progressMessage:
-
-        document.getElementById("progressMessage"),
-
-    progressSection:
-
-        document.getElementById("progressSection"),
-
-    loadingModal:
-
-        document.getElementById("loadingModal")
+    processingTime: byId("processingTime")
 
 };
 
+    /* Table */
 
-/* ============================================================
-   DASHBOARD
-============================================================ */
+    elements.tableBody =
+        byId("resultsBody");
+
+    elements.resultCount =
+        byId("resultCount");
+
+    elements.pagination =
+        byId("pagination");
+
+    /* Diagnostics */
+
+    elements.provider =
+        byId("provider");
+
+    elements.sheet =
+        byId("sheetName");
+
+    elements.headerRow =
+        byId("headerRow");
+
+    elements.ticketColumn =
+        byId("ticketColumn");
+
+    log("Renderer initialized.");
+
+}
+
+
+/* ============================================================================
+   ACCESSOR
+============================================================================ */
 
 /**
- * Updates dashboard metrics.
+ * Returns cached elements.
  *
- * @param {Object} summary
+ * @returns {Object}
  */
-export function renderDashboard(summary){
+export function getElements(){
 
-    elements.gdsCount.textContent =
-
-        summary.gdsRecords;
-
-    elements.systemCount.textContent =
-
-        summary.systemRecords;
-
-    elements.voidCount.textContent =
-
-        summary.voidGDS +
-        summary.voidSystem;
-
-    elements.duplicateCount.textContent =
-
-        summary.duplicateGDS +
-        summary.duplicateSystem;
-
-    elements.missingSystemCount.textContent =
-
-        summary.missingSystem;
-
-    elements.missingGDSCount.textContent =
-
-        summary.missingGDS;
+    return elements;
 
 }
 
 
-/* ============================================================
-   STATUS
-============================================================ */
+/* ============================================================================
+   RESET
+============================================================================ */
 
 /**
- * Updates the status bar.
+ * Clears previous results.
+ */
+export function clearRenderer(){
+
+    clear(
+
+        elements.tableBody
+
+    );
+
+    text(
+
+        elements.resultCount,
+
+        "0"
+
+    );
+
+}
+
+
+/* ============================================================================
+   STATUS LABEL
+============================================================================ */
+
+/**
+ * Converts internal status to UI label.
  *
- * @param {string} message
- */
-export function renderStatus(message){
-
-    elements.statusText.textContent =
-
-        message;
-
-}
-
-
-/* ============================================================
-   PROGRESS
-============================================================ */
-
-/**
- * Updates progress.
- *
- * @param {number} percent
- * @param {string} message
- */
-export function renderProgress(
-
-    percent,
-
-    message
-
-){
-
-    elements.progressSection
-        .classList.remove("hidden");
-
-    elements.progressFill.style.width =
-
-        `${percent}%`;
-
-    elements.progressMessage.textContent =
-
-        message;
-
-}
-
-
-/**
- * Hides progress.
- */
-export function hideProgress(){
-
-    elements.progressSection
-        .classList.add("hidden");
-
-}
-
-
-/* ============================================================
-   LOADING
-============================================================ */
-
-/**
- * Shows loading dialog.
- */
-export function showLoading(){
-
-    elements.loadingModal
-        .classList.remove("hidden");
-
-}
-
-
-/**
- * Hides loading dialog.
- */
-export function hideLoading(){
-
-    elements.loadingModal
-        .classList.add("hidden");
-
-}
-
-/* ============================================================
-   TABLE UTILITIES
-============================================================ */
-
-/**
- * Clears the result table.
- */
-function clearTable() {
-
-    elements.resultBody.innerHTML = "";
-
-}
-
-
-/**
- * Returns a status CSS class.
- *
- * @param {string} reason
+ * @param {string} status
  * @returns {string}
  */
-function getStatusClass(reason) {
+export function getStatusLabel(status){
 
-    switch (reason) {
+    return STATUS_LABELS[status] ||
 
-        case "Missing in System":
-            return "status-danger";
+           status;
 
-        case "Missing in GDS":
-            return "status-warning";
+}
+/* ============================================================================
+   DASHBOARD
+============================================================================ */
 
-        case "Duplicate":
-            return "status-info";
+/**
+ * Updates dashboard summary cards.
+ *
+ * @param {Object} statistics
+ */
+export function renderDashboard(statistics){
+
+    const cards = elements.dashboard;
+
+    text(
+        cards.totalGDS,
+        statistics.gdsRecords
+    );
+
+    text(
+        cards.totalSystem,
+        statistics.systemRecords
+    );
+
+    text(
+        cards.totalMatched,
+        statistics.matched
+    );
+
+    text(
+        cards.totalMissingSystem,
+        statistics.missingInSystem
+    );
+
+    text(
+        cards.totalMissingGDS,
+        statistics.missingInGDS
+    );
+
+    text(
+        cards.totalDuplicates,
+        statistics.duplicateTickets
+    );
+
+    text(
+        cards.totalVoid,
+        statistics.voidGDS + statistics.voidSystem
+    );
+
+    text(
+        cards.processingTime,
+        `${statistics.processingTime} ms`
+    );
+
+}
+
+
+/* ============================================================================
+   SUMMARY
+============================================================================ */
+
+/**
+ * Updates summary information.
+ *
+ * @param {Object} statistics
+ */
+export function renderSummary(statistics){
+
+    text(
+
+        elements.resultCount,
+
+        statistics.gdsRecords
+
+    );
+
+}
+/* ============================================================================
+   STATUS BADGE
+============================================================================ */
+
+/**
+ * Returns badge class.
+ *
+ * @param {string} status
+ * @returns {string}
+ */
+function statusClass(status){
+
+    switch(status){
+
+        case "MATCHED":
+
+            return "badge-success";
+
+        case "MISSING_IN_SYSTEM":
+
+            return "badge-danger";
+
+        case "MISSING_IN_GDS":
+
+            return "badge-warning";
 
         case "VOID":
-            return "status-success";
+
+            return "badge-secondary";
 
         default:
-            return "";
+
+            return "badge-light";
 
     }
 
@@ -235,248 +289,43 @@ function getStatusClass(reason) {
 
 
 /**
- * Creates one result row.
+ * Creates badge HTML.
  *
- * @param {Object} record
- * @param {number} index
- * @returns {HTMLTableRowElement}
- */
-function createRow(record, index) {
-
-    const tr = document.createElement("tr");
-
-    const statusClass = getStatusClass(
-        record.reason || ""
-    );
-
-    tr.innerHTML = `
-
-        <td>${index + 1}</td>
-
-        <td>${record.originalTicket ?? record.ticket}</td>
-
-        <td>${record.passenger ?? ""}</td>
-
-        <td>${record.issueDate ?? ""}</td>
-
-        <td>${record.airline ?? ""}</td>
-
-        <td>${record.consultant ?? ""}</td>
-
-        <td>${record.source ?? ""}</td>
-
-        <td>${record.status ?? ""}</td>
-
-        <td class="${statusClass}">
-
-            ${record.reason ?? ""}
-
-        </td>
-
-    `;
-
-    return tr;
-
-}
-
-
-/* ============================================================
-   EMPTY STATE
-============================================================ */
-
-/**
- * Displays empty table message.
- *
- * @param {string} message
- */
-export function renderEmpty(message = "No records found.") {
-
-    clearTable();
-
-    const tr = document.createElement("tr");
-
-    tr.innerHTML = `
-
-        <td colspan="9" class="text-center">
-
-            ${message}
-
-        </td>
-
-    `;
-
-    elements.resultBody.appendChild(tr);
-
-}
-
-
-/* ============================================================
-   RESULT TABLE
-============================================================ */
-
-/**
- * Renders reconciliation records.
- *
- * @param {Array} records
- */
-export function renderTable(records = []) {
-
-    clearTable();
-
-    if (!records.length) {
-
-        renderEmpty();
-
-        return;
-
-    }
-
-    records.forEach((record, index) => {
-
-        elements.resultBody.appendChild(
-
-            createRow(
-
-                record,
-
-                index
-
-            )
-
-        );
-
-    });
-
-}
-
-
-/* ============================================================
-   SUMMARY
-============================================================ */
-
-/**
- * Renders summary information.
- *
- * @param {Object} summary
- */
-export function renderSummary(summary) {
-
-    renderStatus(
-
-        `Matched: ${summary.matched} | ` +
-
-        `Missing in System: ${summary.missingSystem} | ` +
-
-        `Missing in GDS: ${summary.missingGDS}`
-
-    );
-
-}
-/* ============================================================
-   TABLE TABS
-============================================================ */
-
-/**
- * Activates a result tab.
- *
- * @param {string} tabName
- */
-export function activateTab(tabName) {
-
-    const tabs = document.querySelectorAll(".tab");
-
-    tabs.forEach(tab => {
-
-        if (
-
-            tab.dataset.tab === tabName
-
-        ) {
-
-            tab.classList.add("active");
-
-        }
-
-        else {
-
-            tab.classList.remove("active");
-
-        }
-
-    });
-
-}
-
-
-/* ============================================================
-   SEARCH HIGHLIGHT
-============================================================ */
-
-/**
- * Highlights matching text.
- *
- * @param {string} text
- * @param {string} search
+ * @param {string} status
  * @returns {string}
  */
-export function highlightText(text, search) {
+export function renderStatusBadge(status){
 
-    if (!search) {
+    return `
 
-        return text;
+        <span class="${statusClass(status)}">
 
-    }
+            ${getStatusLabel(status)}
 
-    const escaped = search.replace(
+        </span>
 
-        /[.*+?^${}()|[\]\\]/g,
-
-        "\\$&"
-
-    );
-
-    const regex = new RegExp(
-
-        `(${escaped})`,
-
-        "gi"
-
-    );
-
-    return String(text)
-
-        .replace(
-
-            regex,
-
-            "<mark>$1</mark>"
-
-        );
+    `;
 
 }
+/* ============================================================================
+   EMPTY TABLE
+============================================================================ */
 
+export function renderEmptyTable(message = "No records found."){
 
-/* ============================================================
-   TABLE MESSAGE
-============================================================ */
+    clear(
 
-/**
- * Shows a temporary message
- * inside the table.
- *
- * @param {string} message
- */
-export function renderMessage(message) {
+        elements.tableBody
 
-    clearTable();
+    );
 
-    const tr = document.createElement("tr");
+    const row = document.createElement("tr");
 
-    tr.innerHTML = `
+    row.innerHTML = `
 
-        <td colspan="9"
+        <td colspan="8"
 
-            class="text-center">
+            class="text-center empty">
 
             ${message}
 
@@ -484,65 +333,45 @@ export function renderMessage(message) {
 
     `;
 
-    elements.resultBody.appendChild(tr);
+    elements.tableBody.appendChild(row);
 
 }
+/* ============================================================================
+   DIAGNOSTICS
+============================================================================ */
 
+export function renderDiagnostics(diagnostics){
 
-/* ============================================================
-   RESET
-============================================================ */
+    text(
 
-/**
- * Resets the UI.
- */
-export function resetRenderer() {
+        elements.provider,
 
-    clearTable();
-
-    renderEmpty(
-
-        "No records available."
+        diagnostics.gdsProvider
 
     );
 
-    renderDashboard({
+    text(
 
-        gdsRecords:0,
+        elements.sheet,
 
-        systemRecords:0,
-
-        missingSystem:0,
-
-        missingGDS:0,
-
-        duplicateGDS:0,
-
-        duplicateSystem:0,
-
-        voidGDS:0,
-
-        voidSystem:0
-
-    });
-
-    renderStatus(
-
-        "Ready"
+        diagnostics.sheetName
 
     );
 
-    hideProgress();
+    text(
+
+        elements.headerRow,
+
+        diagnostics.headerRow
+
+    );
+
+    text(
+
+        elements.ticketColumn,
+
+        diagnostics.ticketColumn
+
+    );
 
 }
-
-
-/* ============================================================
-   EXPORTS
-============================================================ */
-
-export {
-
-    elements
-
-};
