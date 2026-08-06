@@ -1,563 +1,453 @@
 /**
- * ============================================================
+ * ============================================================================
  * GDS Ticket Reconciliation Tool
- * File: js/parser.js
- * Description:
- * Reads Excel/CSV files and converts them into
- * normalized reconciliation records.
- * ============================================================
+ * Version : 2.0.0
+ * File    : js/parser.js
+ *
+ * Reads and converts uploaded reports into the canonical dataset.
+ * ============================================================================
  */
 
-import { GDS_TYPES } from "./config.js";
+import {
+
+    loadRows
+
+} from "./utils/excel.js";
 
 import {
-    getFileExtension,
-    removeEmptyRows,
-    cleanText
-} from "./utils.js";
 
-import {
-    buildSchema,
-    logSchema
+    detectReport
+
 } from "./detector.js";
 
 import {
-    normalizeRecord,
-    isVoid
+
+    normalizeRecord
+
 } from "./normalizer.js";
 
+import {
 
-/* ============================================================
-   PUBLIC API
-============================================================ */
+    GDS,
+    STATUS
 
-/**
- * Parses any supported report.
- *
- * @param {File} file
- * @returns {Promise<Object>}
- */
-export async function parseReport(file){
+} from "./config.js";
 
-    if(!file){
+import {
 
-        throw new Error(
-            "No report selected."
-        );
+    log
 
-    }
-
-    const rows =
-        await readReport(file);
-
-    const cleanedRows =
-        removeEmptyRows(rows);
-
-    const schema =
-        buildSchema(cleanedRows);
-
-    logSchema(schema);
-
-    return parseRows(
-        cleanedRows,
-        schema
-    );
-
-}
+} from "./utils/logger.js";
 
 
-/* ============================================================
-   FILE READER
-============================================================ */
+/* ============================================================================
+   DATASET BUILDER
+============================================================================ */
 
 /**
- * Reads Excel or CSV.
+ * Creates an empty dataset.
  *
- * @param {File} file
- * @returns {Promise<Array[]>}
+ * @returns {Object}
  */
-async function readReport(file){
-
-    const extension =
-        getFileExtension(file.name);
-
-    switch(extension){
-
-        case "csv":
-
-            return await readCSV(file);
-
-        case "xls":
-
-        case "xlsx":
-
-            return await readExcel(file);
-
-        default:
-
-            throw new Error(
-
-                "Unsupported file format."
-
-            );
-
-    }
-
-}
-
-
-/* ============================================================
-   EXCEL
-============================================================ */
-
-function readExcel(file){
-
-    return new Promise(
-
-        (resolve,reject)=>{
-
-            const reader =
-                new FileReader();
-
-            reader.onload=e=>{
-
-                try{
-
-                    const workbook=
-                        XLSX.read(
-
-                            e.target.result,
-
-                            {
-                                type:"array"
-                            }
-
-                        );
-
-                    const firstSheet=
-
-                        workbook.SheetNames[0];
-
-                    const worksheet=
-
-                        workbook.Sheets[firstSheet];
-
-                    const rows=
-
-                        XLSX.utils.sheet_to_json(
-
-                            worksheet,
-
-                            {
-
-                                header:1,
-
-                                raw:false,
-
-                                defval:""
-
-                            }
-
-                        );
-
-                    resolve(rows);
-
-                }
-
-                catch(error){
-
-                    reject(error);
-
-                }
-
-            };
-
-            reader.onerror=reject;
-
-            reader.readAsArrayBuffer(file);
-
-        }
-
-    );
-
-}
-
-
-/* ============================================================
-   CSV
-============================================================ */
-
-function readCSV(file){
-
-    return new Promise(
-
-        (resolve,reject)=>{
-
-            Papa.parse(
-
-                file,
-
-                {
-
-                    skipEmptyLines:true,
-
-                    complete:results=>{
-
-                        resolve(results.data);
-
-                    },
-
-                    error:error=>{
-
-                        reject(error);
-
-                    }
-
-                }
-
-            );
-
-        }
-
-    );
-
-}
-
-
-/* ============================================================
-   ROW PARSER
-============================================================ */
-
-/**
- * Converts worksheet rows into reconciliation records.
- *
- * Remaining implementation
- * continues in Part 2.
- *
- * @param {Array[]} rows
- * @param {Object} schema
- */
-function parseRows(rows,schema){
-
-    const {
-
-        reportType,
-
-        headerRow,
-
-        columnMap
-
-    } = schema;
+function createDataset() {
 
     return {
 
-        reportType,
+        provider: GDS.UNKNOWN,
 
-        records:[],
+        reportName: "",
 
-        duplicates:[],
+        sheetName: "",
 
-        voidRecords:[],
+        headers: [],
 
-        headerRow,
+        columnMap: {},
 
-        columnMap,
+        records: [],
 
-        rows
+        voidRecords: [],
+
+        duplicateGroups: [],
+
+        diagnostics: {
+
+            headerRow: 0,
+
+            recordsRead: 0,
+
+            activeRecords: 0,
+
+            voidRecords: 0,
+
+            duplicateGroups: 0,
+
+            processingTime: 0
+
+        }
 
     };
 
 }
 
-/* ============================================================
-   RAW ROW BUILDER
-============================================================ */
+
+/* ============================================================================
+   DUPLICATE INDEX
+============================================================================ */
 
 /**
- * Converts a worksheet row into an object using
- * the detected headers.
+ * Builds an index of tickets.
+ *
+ * @returns {Map<string, Array<Object>>}
+ */
+function createDuplicateIndex() {
+
+    return new Map();
+
+}
+
+
+/**
+ * Adds a record to the duplicate index.
+ *
+ * @param {Map} index
+ * @param {Object} record
+ */
+function addToDuplicateIndex(index, record) {
+
+    if (!index.has(record.ticket)) {
+
+        index.set(record.ticket, []);
+
+    }
+
+    index.get(record.ticket).push(record);
+
+}
+
+
+/**
+ * Extracts duplicate groups.
+ *
+ * @param {Map} index
+ * @returns {Array<Array<Object>>}
+ */
+function buildDuplicateGroups(index) {
+
+    return [...index.values()]
+
+        .filter(group => group.length > 1);
+
+}
+
+
+/* ============================================================================
+   CANONICAL RECORD
+============================================================================ */
+
+/**
+ * Builds a canonical record from one spreadsheet row.
  *
  * @param {Array} row
- * @param {Array} headers
+ * @param {Object} context
  * @returns {Object}
  */
-function buildRawRow(row, headers) {
+
+/**
+ * Builds a canonical record.
+ *
+ * @param {Object} options
+ * @returns {Object}
+ */
+function buildRecord({
+
+    row,
+
+    columnMap,
+
+    headers,
+
+    provider,
+
+    rowNumber
+
+}) {
 
     const raw = {};
 
     headers.forEach((header, index) => {
 
-        raw[cleanText(header)] = cleanText(row[index]);
+        raw[header] = row[index] ?? "";
 
     });
 
-    return raw;
+    const fields = extractFields(
 
-}
-
-
-/* ============================================================
-   RECORD BUILDER
-============================================================ */
-
-/**
- * Builds a normalized reconciliation record.
- *
- * @param {Array} row
- * @param {Object} schema
- * @returns {Object}
- */
-function buildRecord(row, schema) {
-
-    const {
-
-        reportType,
-
-        headers,
+        row,
 
         columnMap
 
-    } = schema;
+    );
 
-    const record = {
+    return normalizeRecord({
 
-        ticket:
-            row[columnMap.ticket],
+        id: `${provider}-${rowNumber}`,
 
-        passenger:
-            columnMap.passenger >= 0
-                ? row[columnMap.passenger]
-                : "",
+        ticket: "",
 
-        issueDate:
-            columnMap.issueDate >= 0
-                ? row[columnMap.issueDate]
-                : "",
+        ...fields,
 
-        airline:
-            columnMap.airline >= 0
-                ? row[columnMap.airline]
-                : "",
+        provider,
 
-        consultant:
-            columnMap.consultant >= 0
-                ? row[columnMap.consultant]
-                : "",
+        reportName: "",
 
-        status:
-            columnMap.status >= 0
-                ? row[columnMap.status]
-                : "",
+        sheetName: "",
 
-        source:
-            reportType,
+        sourceRow: rowNumber,
 
-        raw:
-            buildRawRow(
-                row,
-                headers
-            )
+        duplicate: false,
 
-    };
+        duplicateGroup: null,
 
-    return normalizeRecord(record);
+        reason: "",
+
+        raw
+
+    });
 
 }
-
-
-/* ============================================================
-   DUPLICATE DETECTOR
-============================================================ */
+/* ============================================================================
+   DATASET PROCESSOR
+============================================================================ */
 
 /**
- * Returns true if ticket already exists.
+ * Processes spreadsheet rows into a canonical dataset.
  *
- * @param {Map} index
- * @param {string} ticket
- * @returns {boolean}
+ * @param {Array<Array>} rows
+ * @returns {Object}
  */
-function isDuplicate(index, ticket) {
+function processRows(rows){
 
-    return index.has(ticket);
+    const started = performance.now();
 
+    const dataset = createDataset();
+
+    const report = detectReport(rows);
+
+    if(!report.valid){
+
+        throw new Error(report.message);
+
+ }
+
+      const {
+
+    provider,
+
+    headers,
+
+    columns,
+
+    headerRow
+
+} = report;
+
+    dataset.provider = provider;
+
+    dataset.headers = headers;
+    
+    dataset.columnMap = columns;
+    
+    dataset.diagnostics.headerRow = headerRow;
+
+    const duplicateIndex = createDuplicateIndex();
+
+   for (
+
+    let rowIndex = headerRow + 1;
+
+    rowIndex < rows.length;
+
+    rowIndex++
+
+) {
+
+    const row = rows[rowIndex];
+
+    if (!row) {
+
+        continue;
+
+    }
+
+    const record = buildRecord({
+
+        row,
+
+        columnMap: columns,
+
+        headers,
+
+        provider,
+
+        rowNumber: rowIndex + 1
+
+    });
+
+    dataset.diagnostics.recordsRead++;
+
+    // Continue processing...
 }
 
+        dataset.diagnostics.recordsRead++;
 
-/* ============================================================
-   RECORD PROCESSOR
-============================================================ */
+        /* ----------------------------------------
+           VOID
+        ----------------------------------------- */
 
-function processRows(rows, schema) {
+        if(record.status === STATUS.VOID){
 
-    const {
+            dataset.voidRecords.push(record);
 
-        headerRow
-
-    } = schema;
-
-    const records = [];
-
-    const duplicates = [];
-
-    const voidRecords = [];
-
-    const ticketIndex = new Map();
-
-    for (
-
-        let rowIndex = headerRow + 1;
-
-        rowIndex < rows.length;
-
-        rowIndex++
-
-    ) {
-
-        const row = rows[rowIndex];
-
-        if (!row) {
+            dataset.diagnostics.voidRecords++;
 
             continue;
 
         }
 
-        const record = buildRecord(
-            row,
-            schema
-        );
+        /* ----------------------------------------
+           ACTIVE RECORD
+        ----------------------------------------- */
 
-        /* Skip rows with no ticket */
+        dataset.records.push(record);
 
-        if (!record.ticket) {
+        dataset.diagnostics.activeRecords++;
 
-            continue;
+        addToDuplicateIndex(
 
-        }
-
-        /* VOID */
-
-        if (isVoid(record.status)) {
-
-            voidRecords.push(record);
-
-            continue;
-
-        }
-
-        /* DUPLICATE */
-
-        if (
-
-            isDuplicate(
-                ticketIndex,
-                record.ticket
-            )
-
-        ) {
-
-            duplicates.push(record);
-
-            continue;
-
-        }
-
-        ticketIndex.set(
-
-            record.ticket,
+            duplicateIndex,
 
             record
 
         );
 
-        records.push(record);
-
     }
+
+    dataset.duplicateGroups =
+
+        buildDuplicateGroups(
+
+            duplicateIndex
+
+        );
+
+    dataset.diagnostics.duplicateGroups =
+
+        dataset.duplicateGroups.length;
+
+    dataset.diagnostics.processingTime =
+
+        Number(
+
+            (
+
+                performance.now()
+
+                -
+
+                started
+
+            ).toFixed(2)
+
+        );
+
+    log(
+
+        "Parser completed",
+
+        dataset
+
+    );
+
+    return dataset;
+
+}
+/* ============================================================================
+   FIELD EXTRACTION
+============================================================================ */
+
+/**
+ * Extracts logical fields from a spreadsheet row.
+ *
+ * @param {Array} row
+ * @param {Object} columnMap
+ * @returns {Object}
+ */
+function extractFields(row, columnMap){
 
     return {
 
-        records,
+        originalTicket:
 
-        duplicates,
+            row[columnMap.ticket] ?? "",
 
-        voidRecords
+        passenger:
+
+            row[columnMap.passenger] ?? "",
+
+        airline:
+
+            row[columnMap.airline] ?? "",
+
+        route:
+
+            row[columnMap.route] ?? "",
+
+        issueDate:
+
+            row[columnMap.issueDate] ?? "",
+
+        consultant:
+
+            row[columnMap.consultant] ?? "",
+
+        status:
+
+            row[columnMap.status] ?? ""
 
     };
 
 }
 
-/* ============================================================
-   ROW PARSER
-============================================================ */
+
+/* ============================================================================
+   PUBLIC API
+============================================================================ */
 
 /**
- * Parses worksheet rows into normalized reconciliation data.
+ * Parses an uploaded report file into the
+ * canonical dataset.
  *
- * @param {Array[]} rows
- * @param {Object} schema
- * @returns {Object}
+ * @param {File} file
+ * @returns {Promise<Object>}
  */
-function parseRows(rows, schema) {
+export async function parseFile(file){
 
-    const {
+    const rows = await loadRows(file);
 
-        reportType,
+    if(!rows.length){
 
-        headerRow,
+        throw new Error(
 
-        headers,
+            "The uploaded report contains no data."
 
-        columnMap
+        );
 
-    } = schema;
+    }
 
-    const {
+    const dataset = processRows(rows);
 
-        records,
+    dataset.reportName = file.name;
 
-        duplicates,
-
-        voidRecords
-
-    } = processRows(
-
-        rows,
-
-        schema
-
-    );
-
-    return {
-
-        reportType,
-
-        headerRow,
-
-        headers,
-
-        columnMap,
-
-        totalRows:
-
-            rows.length,
-
-        processedRows:
-
-            records.length,
-
-        duplicateCount:
-
-            duplicates.length,
-
-        voidCount:
-
-            voidRecords.length,
-
-        records,
-
-        duplicates,
-
-        voidRecords
-
-    };
+    return dataset;
 
 }
