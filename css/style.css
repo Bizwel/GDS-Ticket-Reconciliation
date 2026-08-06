@@ -1577,3 +1577,15 @@ button:focus{
     padding:30px;
     color:#777;
 }
+
+.duplicate-row{
+
+    background:#fff8e1;
+
+}
+
+.duplicate-row:hover{
+
+    background:#ffe9a8;
+
+}
