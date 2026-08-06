@@ -1,309 +1,375 @@
 /**
- * ============================================================
+ * ============================================================================
  * GDS Ticket Reconciliation Tool
- * File: js/reconciler.js
- * Description:
- * Compares parsed GDS and System reports.
- * ============================================================
+ * Version : 2.0.0
+ * File    : js/reconciler.js
+ *
+ * Reconciliation Engine
+ * ============================================================================
  */
 
-/* ============================================================
+import { log } from "./utils/logger.js";
+
+/* ============================================================================
+   RESULT FACTORY
+============================================================================ */
+
+function createResult() {
+
+    return {
+
+         records: [],
+
+        gdsMatched: [],
+
+        gdsMissingInSystem: [],
+
+        systemMissingInGDS: [],
+
+        duplicateAnalysis: {
+
+            gds: [],
+
+            system: []
+
+         },
+
+        statistics: {
+
+            gdsRecords: 0,
+
+            systemRecords: 0,
+
+            matched: 0,
+
+            missingInSystem: 0,
+
+            missingInGDS: 0,
+
+            duplicateTickets: 0,
+
+            duplicateRecords: 0,
+
+            voidGDS: 0,
+
+            voidSystem: 0,
+
+            matchPercentage: 0,
+
+            processingTime: 0
+
+        },
+
+        diagnostics: {
+
+            gdsProvider: "",
+
+            systemProvider: "",
+
+            comparedTickets: 0,
+
+            matchedTickets: 0,
+
+            startedAt: 0,
+
+            finishedAt: 0
+
+        }
+
+    };
+
+}
+
+/* ============================================================================
    INDEX BUILDER
-============================================================ */
+============================================================================ */
 
 /**
- * Creates a ticket index.
+ * Builds a ticket index.
  *
- * @param {Array} records
- * @returns {Map}
+ * @param {Array<Object>} records
+ * @returns {Map<string, Array<Object>>}
  */
-function buildIndex(records) {
+function buildTicketIndex(records) {
 
     const index = new Map();
 
     records.forEach(record => {
 
-        index.set(
+        if (!index.has(record.ticket)) {
 
-            record.ticket,
+            index.set(record.ticket, []);
 
-            record
+        }
 
-        );
+        index.get(record.ticket).push(record);
 
     });
 
     return index;
 
 }
-
-
-/* ============================================================
-   MATCHED
-============================================================ */
-
-function findMatched(
-
-    gdsIndex,
-
-    systemIndex
-
-) {
-
-    const matched = [];
-
-    gdsIndex.forEach(record => {
-
-        if (
-
-            systemIndex.has(
-                record.ticket
-            )
-
-        ) {
-
-            matched.push({
-
-                gds: record,
-
-                system:
-
-                    systemIndex.get(
-
-                        record.ticket
-
-                    )
-
-            });
-
-        }
-
-    });
-
-    return matched;
-
-}
-
-
-/* ============================================================
-   MISSING IN SYSTEM
-============================================================ */
-
-function findMissingInSystem(
-
-    gdsIndex,
-
-    systemIndex
-
-) {
-
-    const missing = [];
-
-    gdsIndex.forEach(record => {
-
-        if (
-
-            !systemIndex.has(
-
-                record.ticket
-
-            )
-
-        ) {
-
-            missing.push({
-
-                ...record,
-
-                reason:
-
-                    "Missing in System"
-
-            });
-
-        }
-
-    });
-
-    return missing;
-
-}
-
-
-/* ============================================================
-   MISSING IN GDS
-============================================================ */
-
-function findMissingInGDS(
-
-    gdsIndex,
-
-    systemIndex
-
-) {
-
-    const missing = [];
-
-    systemIndex.forEach(record => {
-
-        if (
-
-            !gdsIndex.has(
-
-                record.ticket
-
-            )
-
-        ) {
-
-            missing.push({
-
-                ...record,
-
-                reason:
-
-                    "Missing in GDS"
-
-            });
-
-        }
-
-    });
-
-    return missing;
-
-}
-
-
-/* ============================================================
-   PUBLIC API
-============================================================ */
+/* ============================================================================
+   MATCHING ENGINE
+============================================================================ */
 
 /**
- * Reconciles two parsed reports.
+ * Compares two ticket indexes.
  *
- * @param {Object} gds
- * @param {Object} system
- * @returns {Object}
+ * @param {Map<string, Array<Object>>} gdsIndex
+ * @param {Map<string, Array<Object>>} systemIndex
+ * @param {Object} result
  */
-export function reconcile(
-
-    gds,
-
-    system
-
+function compareIndexes(
+    gdsIndex,
+    systemIndex,
+    result
 ) {
 
+    /* ------------------------------------------------------------------------
+       GDS -> SYSTEM
+    ------------------------------------------------------------------------ */
+
+    gdsIndex.forEach((gdsRecords, ticket) => {
+
+        result.diagnostics.comparedTickets++;
+
+        if (systemIndex.has(ticket)) {
+
+            const systemRecords = systemIndex.get(ticket);
+
+           const item = {
+
+    ticket,
+
+    status: "MATCHED",
+
+    gds: gdsRecords,
+
+    system: systemRecords
+
+};
+
+result.gdsMatched.push(item);
+
+result.records.push(item);
+
+        } else {
+
+            const item = {
+
+    ticket,
+
+    status: "MISSING_IN_SYSTEM",
+
+    records: gdsRecords
+
+};
+
+const item = {
+
+    ticket,
+
+    status: "MISSING_IN_GDS",
+
+    records: systemRecords
+
+};
+
+   result.systemMissingInGDS.push(item);
+   
+   result.records.push(item);
+
+});
+
+    /* ------------------------------------------------------------------------
+       SYSTEM -> GDS
+    ------------------------------------------------------------------------ */
+
+    systemIndex.forEach((systemRecords, ticket) => {
+
+        if (!gdsIndex.has(ticket)) {
+
+            result.systemMissingInGDS.push({
+
+                ticket,
+
+                records: systemRecords
+
+            });
+
+        }
+
+    });
+
+}
+/* ============================================================================
+   STATISTICS
+============================================================================ */
+
+function buildStatistics(
+    result,
+    gdsDataset,
+    systemDataset
+) {
+
+    result.statistics.gdsRecords =
+        gdsDataset.records.length;
+
+    result.statistics.systemRecords =
+        systemDataset.records.length;
+
+    result.statistics.matched =
+        result.gdsMatched.length;
+
+    result.statistics.missingInSystem =
+        result.gdsMissingInSystem.length;
+
+    result.statistics.missingInGDS =
+        result.systemMissingInGDS.length;
+
+    result.statistics.voidGDS =
+        gdsDataset.voidRecords.length;
+
+    result.statistics.voidSystem =
+        systemDataset.voidRecords.length;
+
+    result.statistics.duplicateTickets =
+
+        gdsDataset.duplicateGroups.length +
+
+        systemDataset.duplicateGroups.length;
+
+    result.statistics.duplicateRecords =
+
+        gdsDataset.duplicateGroups.reduce(
+
+            (sum, group) => sum + group.records.length,
+
+            0
+
+        ) +
+
+        systemDataset.duplicateGroups.reduce(
+
+            (sum, group) => sum + group.records.length,
+
+            0
+
+        );
+
+    if (result.statistics.gdsRecords > 0) {
+
+        result.statistics.matchPercentage = Number(
+
+            (
+
+                result.statistics.matched /
+
+                result.statistics.gdsRecords *
+
+                100
+
+            ).toFixed(2)
+
+        );
+
+    }
+
+}
+/* ============================================================================
+   DIAGNOSTICS
+============================================================================ */
+
+function buildDiagnostics(
+    result,
+    gdsDataset,
+    systemDataset,
+    started
+) {
+
+    result.diagnostics.gdsProvider =
+        gdsDataset.provider;
+
+    result.diagnostics.systemProvider =
+        systemDataset.provider;
+
+    result.diagnostics.matchedTickets =
+        result.statistics.matched;
+
+    result.diagnostics.finishedAt =
+        performance.now();
+
+    result.statistics.processingTime = Number(
+
+        (
+
+            result.diagnostics.finishedAt -
+
+            started
+
+        ).toFixed(2)
+
+    );
+
+}
+/* ============================================================================
+   PUBLIC API
+============================================================================ */
+
+/**
+ * Reconciles two datasets.
+ *
+ * @param {Object} gdsDataset
+ * @param {Object} systemDataset
+ * @returns {Object}
+ */
+export function reconcileDatasets(
+    gdsDataset,
+    systemDataset
+) {
+
+    const started = performance.now();
+
+    const result = createResult();
+
     const gdsIndex =
-
-        buildIndex(
-
-            gds.records
-
+        buildTicketIndex(
+            gdsDataset.records
         );
 
     const systemIndex =
-
-        buildIndex(
-
-            system.records
-
+        buildTicketIndex(
+            systemDataset.records
         );
 
-    const matched =
+    compareIndexes(
+        gdsIndex,
+        systemIndex,
+        result
+    );
 
-        findMatched(
+    buildStatistics(
+        result,
+        gdsDataset,
+        systemDataset
+    );
 
-            gdsIndex,
+    buildDiagnostics(
+        result,
+        gdsDataset,
+        systemDataset,
+        started
+    );
 
-            systemIndex
+    result.duplicateAnalysis.gds =
+        gdsDataset.duplicateGroups;
 
-        );
+    result.duplicateAnalysis.system =
+        systemDataset.duplicateGroups;
 
-    const missingSystem =
+    log("Reconciliation Complete", result);
 
-        findMissingInSystem(
-
-            gdsIndex,
-
-            systemIndex
-
-        );
-
-    const missingGDS =
-
-        findMissingInGDS(
-
-            gdsIndex,
-
-            systemIndex
-
-        );
-
-    return {
-
-        matched,
-
-        missingSystem,
-
-        missingGDS,
-
-        duplicateGDS:
-
-            gds.duplicates,
-
-        duplicateSystem:
-
-            system.duplicates,
-
-        voidGDS:
-
-            gds.voidRecords,
-
-        voidSystem:
-
-            system.voidRecords,
-
-        summary: {
-
-            gdsRecords:
-
-                gds.records.length,
-
-            systemRecords:
-
-                system.records.length,
-
-            matched:
-
-                matched.length,
-
-            missingSystem:
-
-                missingSystem.length,
-
-            missingGDS:
-
-                missingGDS.length,
-
-            duplicateGDS:
-
-                gds.duplicates.length,
-
-            duplicateSystem:
-
-                system.duplicates.length,
-
-            voidGDS:
-
-                gds.voidRecords.length,
-
-            voidSystem:
-
-                system.voidRecords.length
-
-        }
-
-    };
+    return result;
 
 }
