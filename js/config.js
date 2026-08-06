@@ -211,15 +211,15 @@ export const STATUS = Object.freeze({
    RESULT VIEWS
 ============================================================================ */
 
-export const RESULT_STATUS = Object.freeze({
+export const STATUS_LABELS = Object.freeze({
 
-    MATCHED: "MATCHED",
+    MATCHED: "Matched",
 
-    MISSING_IN_SYSTEM: "MISSING_IN_SYSTEM",
+    MISSING_IN_SYSTEM: "Missing in System",
 
-    MISSING_IN_GDS: "MISSING_IN_GDS",
+    MISSING_IN_GDS: "Missing in GDS",
 
-    DUPLICATE: "DUPLICATE",
+    DUPLICATE: "Duplicate",
 
     VOID: "VOID"
 
