@@ -647,13 +647,85 @@ export const TABLE_COLUMNS = Object.freeze([
    PAGINATION
 ============================================================================ */
 
-const paginationState = {
+/**
+ * Renders compact pagination controls.
+ *
+ * @param {Array<Object>} records
+ * @param {Function} onPageChange
+ */
+export function renderPagination(records, onPageChange) {
 
-    page: 1,
+    clear(elements.pagination);
 
-    pageSize: 100
+    const pages = totalPages(records);
 
-};
+    if (pages <= 1) {
+        return;
+    }
+
+    const container = document.createElement("div");
+
+    container.className = "pagination";
+
+    /* Previous */
+
+    const previous = document.createElement("button");
+
+    previous.textContent = "◀ Previous";
+
+    previous.disabled = paginationState.page === 1;
+
+    previous.onclick = () => {
+
+        if (paginationState.page > 1) {
+
+            paginationState.page--;
+
+            onPageChange?.();
+
+        }
+
+    };
+
+    container.appendChild(previous);
+
+    /* Page Indicator */
+
+    const indicator = document.createElement("span");
+
+    indicator.className = "page-indicator";
+
+    indicator.textContent =
+
+        `Page ${paginationState.page} of ${pages}`;
+
+    container.appendChild(indicator);
+
+    /* Next */
+
+    const next = document.createElement("button");
+
+    next.textContent = "Next ▶";
+
+    next.disabled = paginationState.page >= pages;
+
+    next.onclick = () => {
+
+        if (paginationState.page < pages) {
+
+            paginationState.page++;
+
+            onPageChange?.();
+
+        }
+
+    };
+
+    container.appendChild(next);
+
+    elements.pagination.appendChild(container);
+
+}
 
 export function setCurrentPage(page){
 
