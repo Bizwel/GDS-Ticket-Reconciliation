@@ -517,3 +517,43 @@ export function renderResults(records){
     );
 
 }
+
+export const TABLE_COLUMNS = Object.freeze([
+
+    {
+
+        key: "ticket",
+
+        label: "Ticket Number",
+
+        width: "180px",
+
+        align: "left"
+
+    },
+
+    {
+
+        key: "gdsCount",
+
+        label: "GDS",
+
+        width: "80px",
+
+        align: "center"
+
+    },
+
+    {
+
+        key: "statusLabel",
+
+        label: "Status",
+
+        width: "170px",
+
+        align: "center"
+
+    }
+
+]);
