@@ -71,19 +71,29 @@ function createDataset() {
 
         diagnostics: {
 
-            headerRow: 0,
+    provider: "",
 
-            recordsRead: 0,
+    reportName: "",
 
-            activeRecords: 0,
+    sheetName: "",
 
-            voidRecords: 0,
+    headerRow: 0,
 
-            duplicateGroups: 0,
+    ticketColumn: "",
 
-            processingTime: 0
+    recordsRead: 0,
 
-        }
+    activeRecords: 0,
+
+    voidRecords: 0,
+
+    duplicateGroups: 0,
+
+    duplicateTickets: 0,
+
+    processingTime: 0
+
+}
 
     };
 
@@ -250,6 +260,12 @@ function processRows(rows){
     headerRow
 
 } = report;
+
+    dataset.diagnostics.provider = provider;
+
+    dataset.diagnostics.ticketColumn =
+
+    headers[columns.ticket] ?? "";
 
     dataset.provider = provider;
 
@@ -455,7 +471,10 @@ export async function parseFile(file){
     dataset.reportName = file.name;
 
     dataset.sheetName = sheetName;
-
+    dataset.diagnostics.reportName =
+    dataset.reportName;
+    dataset.diagnostics.sheetName =
+    dataset.sheetName;
     return dataset;
 
 }
