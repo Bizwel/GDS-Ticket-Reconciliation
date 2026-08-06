@@ -1,233 +1,265 @@
 /**
- * ============================================================
+ * ============================================================================
  * GDS Ticket Reconciliation Tool
- * File: js/normalizer.js
- * Description:
- * Ticket, passenger, status and date normalization.
- * ============================================================
+ * Version : 2.0.0
+ * File    : js/normalizer.js
+ *
+ * Normalization engine.
+ * ============================================================================
  */
 
-import { STATUS } from "./config.js";
-import { cleanText, formatDate } from "./utils.js";
+import {
 
-/* ============================================================
-   TICKET NORMALIZATION
-============================================================ */
+    NORMALIZATION,
+    STATUS
+
+} from "./config.js";
+
+import {
+
+    cleanText,
+    upper
+
+} from "./utils/helpers.js";
+
+
+/* ============================================================================
+   PRIVATE PIPELINE FUNCTIONS
+============================================================================ */
 
 /**
- * Normalizes ticket numbers across all supported GDS reports.
+ * Removes leading airline prefix.
  *
- * Supported formats:
+ * Example:
+ * 157-4854655725 -> 4854655725
+ * 071 2617231450 -> 2617231450
+ */
+function removePrefix(ticket){
+
+    return ticket.replace(
+
+        /^\d{3}[- ]?/,
+
+        ""
+
+    );
+
+}
+
+
+/**
+ * Removes coupon/range suffix.
  *
- * 157-4854655725
- * 071 2617231413
- * 0712617231413
- * 071-2617231413
- * 071 2617231450-451
- * 4870106265
- *
- * Returns:
- * 4854655725
- * 2617231413
- * 2617231413
- * 2617231413
+ * Example:
+ * 2617231450-451
+ * ->
  * 2617231450
- * 4870106265
- *
- * @param {*} ticket
- * @returns {string}
  */
-export function normalizeTicket(ticket) {
+function removeSuffix(ticket){
 
-    let value = cleanText(ticket);
+    return ticket.replace(
 
-    if (!value) {
+        /-\d+$/,
+
+        ""
+
+    );
+
+}
+
+
+/**
+ * Removes spaces.
+ */
+function removeSpaces(ticket){
+
+    return ticket.replace(/\s+/g,"");
+
+}
+
+
+/**
+ * Keeps digits only.
+ */
+function digitsOnly(ticket){
+
+    return ticket.replace(/\D/g,"");
+
+}
+
+
+/**
+ * Validates normalized ticket.
+ */
+function validateTicket(ticket){
+
+    if(
+
+        ticket.length <
+
+        NORMALIZATION.NORMALIZED_TICKET_LENGTH
+
+    ){
+
         return "";
-    }
-
-    // Remove spaces
-    value = value.replace(/\s+/g, "");
-
-    // Remove invisible characters
-    value = value.replace(/[^\d-]/g, "");
-
-    // Remove exchange suffix
-    // Example:
-    // 0712617231450-451
-    value = value.replace(/-\d+$/, "");
-
-    // Remove airline prefix with dash
-    // Example:
-    // 157-4854655725
-    value = value.replace(/^\d{3}-/, "");
-
-    // Remove airline prefix without dash
-    // Example:
-    // 0712617231413
-    if (/^\d{13}$/.test(value)) {
-
-        value = value.substring(3);
 
     }
 
-    return value;
+    return ticket;
 
 }
 
-/* ============================================================
-   ORIGINAL TICKET
-============================================================ */
+
+/* ============================================================================
+   PUBLIC
+============================================================================ */
 
 /**
- * Preserves the ticket exactly as supplied.
- *
- * @param {*} ticket
- * @returns {string}
- */
-export function originalTicket(ticket) {
-
-    return cleanText(ticket);
-
-}
-
-/* ============================================================
-   PASSENGER
-============================================================ */
-
-/**
- * Standardizes passenger names.
- *
- * @param {*} passenger
- * @returns {string}
- */
-export function normalizePassenger(passenger) {
-
-    return cleanText(passenger)
-        .replace(/\s+/g, " ")
-        .toUpperCase();
-
-}
-
-/* ============================================================
-   STATUS
-============================================================ */
-
-/**
- * Normalizes status.
- *
- * @param {*} status
- * @returns {string}
- */
-export function normalizeStatus(status) {
-
-    return cleanText(status)
-        .toUpperCase();
-
-}
-
-/**
- * Returns true if record is VOID.
- *
- * @param {*} status
- * @returns {boolean}
- */
-export function isVoid(status) {
-
-    return normalizeStatus(status) === STATUS.VOID;
-
-}
-
-/* ============================================================
-   AIRLINE
-============================================================ */
-
-/**
- * Normalizes airline code.
- *
- * @param {*} airline
- * @returns {string}
- */
-export function normalizeAirline(airline) {
-
-    return cleanText(airline)
-        .toUpperCase();
-
-}
-
-/* ============================================================
-   CONSULTANT
-============================================================ */
-
-/**
- * Normalizes consultant name.
- *
- * @param {*} consultant
- * @returns {string}
- */
-export function normalizeConsultant(consultant) {
-
-    return cleanText(consultant)
-        .replace(/\s+/g, " ");
-
-}
-
-/* ============================================================
-   DATE
-============================================================ */
-
-/**
- * Normalizes issue date.
+ * Normalizes ticket.
  *
  * @param {*} value
  * @returns {string}
  */
-export function normalizeIssueDate(value) {
+export function normalizeTicket(value){
 
-    return formatDate(value);
+    let ticket =
+
+        cleanText(value);
+
+    ticket =
+
+        removePrefix(ticket);
+
+    ticket =
+
+        removeSuffix(ticket);
+
+    ticket =
+
+        removeSpaces(ticket);
+
+    ticket =
+
+        digitsOnly(ticket);
+
+    ticket =
+
+        validateTicket(ticket);
+
+    return ticket;
 
 }
 
-/* ============================================================
-   RECORD
-============================================================ */
 
 /**
- * Returns a normalized reconciliation record.
+ * Passenger.
+ */
+export function normalizePassenger(value){
+
+    return upper(value);
+
+}
+
+
+/**
+ * Consultant.
+ */
+export function normalizeConsultant(value){
+
+    return upper(value);
+
+}
+
+
+/**
+ * Status.
+ */
+export function normalizeStatus(value){
+
+    const status =
+
+        upper(value);
+
+    return status === STATUS.VOID
+
+        ? STATUS.VOID
+
+        : STATUS.ACTIVE;
+
+}
+
+
+/**
+ * Generic text.
+ */
+export function normalizeTextField(value){
+
+    return cleanText(value);
+
+}
+
+
+/**
+ * Builds canonical record.
  *
  * @param {Object} record
  * @returns {Object}
  */
-export function normalizeRecord(record) {
+export function normalizeRecord(record){
 
     return {
 
-        originalTicket:
-            originalTicket(record.ticket),
+        ...record,
 
         ticket:
-            normalizeTicket(record.ticket),
+
+            normalizeTicket(
+
+                record.originalTicket
+
+            ),
 
         passenger:
-            normalizePassenger(record.passenger),
 
-        airline:
-            normalizeAirline(record.airline),
+            normalizePassenger(
+
+                record.passenger
+
+            ),
 
         consultant:
-            normalizeConsultant(record.consultant),
 
-        issueDate:
-            normalizeIssueDate(record.issueDate),
+            normalizeConsultant(
+
+                record.consultant
+
+            ),
 
         status:
-            normalizeStatus(record.status),
 
-        source:
-            cleanText(record.source),
+            normalizeStatus(
 
-        originalRow:
-            record.originalRow
+                record.status
+
+            )
 
     };
+
+}
+
+
+/**
+ * Dataset.
+ *
+ * @param {Array<Object>} records
+ * @returns {Array<Object>}
+ */
+export function normalizeDataset(records){
+
+    return records.map(
+
+        normalizeRecord
+
+    );
 
 }
