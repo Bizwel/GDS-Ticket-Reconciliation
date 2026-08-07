@@ -1,409 +1,301 @@
 /**
- * ============================================================================
+ * ============================================================
  * GDS Ticket Reconciliation Tool
- * Version : 2.0.0
- * File    : js/config.js
- * Author  : Business Well Technologies
- *
- * Application configuration and global constants.
- * ============================================================================
+ * Version 2.0
+ * File: js/config.js
+ * ============================================================
  */
 
-/* ============================================================================
-   APPLICATION
-============================================================================ */
+export const CONFIG = Object.freeze({
 
-export const APP = Object.freeze({
+    /* ========================================================
+       APPLICATION
+    ======================================================== */
 
-    NAME: "GDS Ticket Reconciliation Tool",
+    app: {
 
-    VERSION: "2.0.0",
+        name: "GDS Ticket Reconciliation Tool",
 
-    AUTHOR: "Business Well Technologies",
+        version: "2.0.0",
 
-    DESCRIPTION:
-        "GDS Sales Report Reconciliation Tool",
-
-    BUILD_DATE: "2026-08-05"
-
-});
-
-
-/* ============================================================================
-   FILE SUPPORT
-============================================================================ */
-
-export const FILE_TYPES = Object.freeze({
-
-    EXCEL: ["xls", "xlsx"],
-
-    CSV: ["csv"],
-
-    ALL: ["xls", "xlsx", "csv"]
-
-});
-
-
-/* ============================================================================
-   GDS TYPES
-============================================================================ */
-
-export const GDS = Object.freeze({
-
-    AMADEUS: "Amadeus",
-
-    GALILEO: "Galileo",
-
-    SABRE: "Sabre",
-
-    SYSTEM: "System",
-
-    UNKNOWN: "Unknown"
-
-});
-
-
-/* ============================================================================
-   REPORT SIGNATURES
-   Used during automatic report detection.
-============================================================================ */
-
-export const REPORT_SIGNATURES = Object.freeze({
-
-    [GDS.AMADEUS]: {
-
-        ticket: ["no"],
-
-        required: ["no"]
+        author: "Business Well Technologies"
 
     },
 
-    [GDS.GALILEO]: {
+    /* ========================================================
+       PROVIDERS
+    ======================================================== */
 
-        ticket: ["number"],
+    providers: {
 
-        required: ["number"]
+        AMADEUS: "amadeus",
+
+        GALILEO: "galileo",
+
+        SABRE: "sabre",
+
+        SYSTEM: "system"
 
     },
 
-    [GDS.SABRE]: {
+    /* ========================================================
+       SUPPORTED FILE TYPES
+    ======================================================== */
 
-        ticket: ["ticket #"],
+    files: {
 
-        required: ["ticket #"]
+        supported: [
+
+            ".xlsx",
+
+            ".xls",
+
+            ".csv"
+
+        ],
+
+        mimeTypes: [
+
+            "application/vnd.ms-excel",
+
+            "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+
+            "text/csv"
+
+        ]
+
+    },
+
+    /* ========================================================
+       REPORT SIGNATURES
+    ======================================================== */
+
+    signatures: {
+
+        amadeus: {
+
+            ticketHeaders: [
+
+                "no"
+
+            ]
+
+        },
+
+        galileo: {
+
+            ticketHeaders: [
+
+                "number"
+
+            ]
+
+        },
+
+        sabre: {
+
+            ticketHeaders: [
+
+                "ticket #"
+
+            ]
+
+        }
+
+    },
+
+    /* ========================================================
+       COLUMN ALIASES
+    ======================================================== */
+
+    columns: {
+
+        ticket: [
+
+            "ticket number",
+
+            "ticket no",
+
+            "ticket #",
+
+            "ticket",
+
+            "number",
+
+            "no",
+
+            "document number",
+
+            "document no"
+
+        ],
+
+        passenger: [
+
+            "passenger",
+
+            "passenger name",
+
+            "traveller",
+
+            "traveler",
+
+            "name"
+
+        ],
+
+        status: [
+
+            "status",
+
+            "ticket status",
+
+            "document status"
+
+        ],
+
+        airline: [
+
+            "airline",
+
+            "carrier",
+
+            "marketing carrier"
+
+        ],
+
+        consultant: [
+
+            "consultant",
+
+            "agent",
+
+            "sales agent",
+
+            "issued by"
+
+        ],
+
+        issueDate: [
+
+            "issue date",
+
+            "issued date",
+
+            "document date",
+
+            "date"
+
+        ]
+
+    },
+
+    /* ========================================================
+       BUSINESS STATUS
+    ======================================================== */
+
+    status: {
+
+        VOID: "VOID"
+
+    },
+
+    /* ========================================================
+       RESULT TYPES
+    ======================================================== */
+
+    resultTypes: {
+
+        MATCHED: "matched",
+
+        MISSING_SYSTEM: "missing-system",
+
+        MISSING_GDS: "missing-gds",
+
+        DUPLICATE: "duplicate",
+
+        VOID: "void"
+
+    },
+
+    /* ========================================================
+       EXPORT SHEETS
+    ======================================================== */
+
+    exportSheets: {
+
+        SUMMARY: "Summary",
+
+        MATCHED: "Matched",
+
+        MISSING_SYSTEM: "Missing in System",
+
+        MISSING_GDS: "Missing in GDS",
+
+        DUPLICATES: "Duplicate Groups",
+
+        VOID: "VOID",
+
+        AUDIT: "Audit Log"
+
+    },
+
+    /* ========================================================
+       VALIDATION
+    ======================================================== */
+
+    validation: {
+
+        maxHeaderScan: 50,
+
+        minimumRows: 2,
+
+        maximumUploadMB: 50
+
+    },
+
+    /* ========================================================
+       NORMALIZATION
+    ======================================================== */
+
+    normalization: {
+
+        airlinePrefixDigits: 3,
+
+        removeExchangeSuffix: true,
+
+        removeSpaces: true,
+
+        normalizedTicketLength: 10
+
+    },
+
+    /* ========================================================
+       PERFORMANCE
+    ======================================================== */
+
+    performance: {
+
+        batchRender: 500,
+
+        searchDebounce: 250,
+
+        maxVisibleRows: 1000
+
+    },
+
+    /* ========================================================
+       UI DEFAULTS
+    ======================================================== */
+
+    ui: {
+
+        defaultView: "missing-system",
+
+        defaultSearch: "",
+
+        defaultFilter: "all"
 
     }
 
 });
-
-
-/* ============================================================================
-   COLUMN ALIASES
-============================================================================ */
-
-export const COLUMN_ALIASES = Object.freeze({
-
-    ticket: [
-
-        "ticket number",
-
-        "ticket no",
-
-        "ticket #",
-
-        "ticket",
-
-        "number",
-
-        "no",
-
-        "document number",
-
-        "document no"
-
-    ],
-
-    status: [
-
-        "status",
-
-        "ticket status",
-
-        "document status",
-
-        "action status"
-
-    ],
-
-    passenger: [
-
-        "passenger",
-
-        "passenger name",
-
-        "traveller",
-
-        "traveler",
-
-        "name"
-
-    ],
-
-    airline: [
-
-        "airline",
-
-        "carrier",
-
-        "marketing carrier",
-
-        "airline code"
-
-    ],
-
-    issueDate: [
-
-        "issue date",
-
-        "issued date",
-
-        "date issued",
-
-        "document date",
-
-        "date"
-
-    ],
-
-    consultant: [
-
-        "consultant",
-
-        "agent",
-
-        "sales agent",
-
-        "issued by",
-
-        "user"
-
-    ]
-
-});
-
-/*=============================================================================
-TABLE COLUMNS
-===============================================================================*/
-
-export const TABLE_COLUMNS = Object.freeze([
-
-    {
-        key: "ticket",
-        label: "Ticket Number",
-        width: "180px",
-        align: "left",
-        formatter: "text"
-    },
-
-    {
-        key: "statusLabel",
-        label: "Status",
-        width: "170px",
-        align: "center",
-        formatter: "badge"
-    },
-
-    {
-        key: "gdsCount",
-        label: "GDS",
-        width: "80px",
-        align: "center",
-        formatter: "number"
-    },
-
-    {
-        key: "systemCount",
-        label: "System",
-        width: "80px",
-        align: "center",
-        formatter: "number"
-    },
-
-    {
-        key: "totalOccurrences",
-        label: "Total",
-        width: "80px",
-        align: "center",
-        formatter: "number"
-    }
-
-]);
-/* ============================================================================
-   STATUS VALUES
-============================================================================ */
-
-export const STATUS = Object.freeze({
-
-    VOID: "VOID",
-
-    ACTIVE: "ACTIVE",
-
-    UNKNOWN: ""
-
-});
-
-
-/* ============================================================================
-   RESULT VIEWS
-============================================================================ */
-
-export const STATUS_LABELS = Object.freeze({
-
-    MATCHED: "Matched",
-
-    MISSING_IN_SYSTEM: "Missing in System",
-
-    MISSING_IN_GDS: "Missing in GDS",
-
-    DUPLICATE: "Duplicate",
-
-    VOID: "VOID"
-
-});
-
-
-/* ============================================================================
-   EXPORT SHEETS
-============================================================================ */
-
-export const EXPORT_SHEETS = Object.freeze({
-
-    SUMMARY: "Summary",
-
-    MATCHED: "Matched",
-
-    MISSING_SYSTEM: "Missing in System",
-
-    MISSING_GDS: "Missing in GDS",
-
-    DUPLICATE_GDS: "Duplicate GDS",
-
-    DUPLICATE_SYSTEM: "Duplicate System",
-
-    VOID_GDS: "VOID GDS",
-
-    VOID_SYSTEM: "VOID System",
-
-    AUDIT: "Audit Log"
-
-});
-
-
-/* ============================================================================
-   NORMALIZATION
-============================================================================ */
-
-export const NORMALIZATION = Object.freeze({
-
-    AIRLINE_PREFIX_LENGTH: 3,
-
-    NORMALIZED_TICKET_LENGTH: 10,
-
-    REMOVE_PREFIX: true,
-
-    REMOVE_SUFFIX: true,
-
-    REMOVE_SPACES: true,
-
-    UPPERCASE_TEXT: true
-
-});
-
-
-/* ============================================================================
-   PARSER
-============================================================================ */
-
-export const PARSER = Object.freeze({
-
-    HEADER_SCAN_LIMIT: 50,
-
-    EMPTY_VALUE: "",
-
-    MAX_FILE_SIZE_MB: 25
-
-});
-
-
-/* ============================================================================
-   SEARCH
-============================================================================ */
-
-export const SEARCHABLE_FIELDS = Object.freeze([
-
-    "ticket",
-
-    "originalTicket",
-
-    "passenger",
-
-    "consultant",
-
-    "airline",
-
-    "status",
-
-    "reason"
-
-]);
-
-
-/* ============================================================================
-   DASHBOARD
-============================================================================ */
-
-export const DASHBOARD = Object.freeze({
-
-    DEFAULTS: {
-
-        gdsRecords: 0,
-
-        systemRecords: 0,
-
-        matched: 0,
-
-        missingSystem: 0,
-
-        missingGDS: 0,
-
-        duplicateGroups: 0,
-
-        voidRecords: 0,
-
-        processingTime: 0
-
-    }
-
-});
-
-
-/* ============================================================================
-   UI
-============================================================================ */
-
-export const UI = Object.freeze({
-
-    DATE_FORMAT: "yyyy-MM-dd",
-
-    PAGE_SIZE: 100,
-
-    DEFAULT_VIEW: RESULT_TYPES.MISSING_SYSTEM
-
-});
-
-
-/* ============================================================================
-   DEBUG
-============================================================================ */
-
-export const DEBUG = false;
