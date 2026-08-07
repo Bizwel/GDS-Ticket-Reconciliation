@@ -1,33 +1,19 @@
 /**
- * ============================================================================
+ * ============================================================
  * GDS Ticket Reconciliation Tool
- * Version : 2.0.0
+ * Version : 2.0
  * File    : js/state.js
- *
- * Central application state.
- * ============================================================================
+ * Purpose : Central application state management.
+ * ============================================================
  */
 
-import {
+import { CONFIG } from "./config.js";
 
-    DASHBOARD,
-    UI
+/* ============================================================
+   PRIVATE STATE
+============================================================ */
 
-} from "./config.js";
-
-/* ============================================================================
-   DEFAULT STATE
-============================================================================ */
-
-const DEFAULT_STATE = Object.freeze({
-
-    files: {
-
-        gds: null,
-
-        system: null
-
-    },
+const initialState = () => ({
 
     datasets: {
 
@@ -39,25 +25,19 @@ const DEFAULT_STATE = Object.freeze({
 
     reconciliation: null,
 
-    currentView: UI.DEFAULT_VIEW,
+    ui: {
 
-    searchText: "",
+        activeView:
 
-    filter: "all",
+            CONFIG.ui.defaultView,
 
-    dashboard: structuredClone(
-        DASHBOARD.DEFAULTS
-    ),
+        search:
 
-    processing: {
+            CONFIG.ui.defaultSearch,
 
-        running: false,
+        filter:
 
-        startedAt: null,
-
-        finishedAt: null,
-
-        duration: 0
+            CONFIG.ui.defaultFilter
 
     },
 
@@ -65,34 +45,132 @@ const DEFAULT_STATE = Object.freeze({
 
         provider: "",
 
-        headerRow: 0,
-
-        ticketColumn: "",
-
         recordsRead: 0,
 
-        duplicates: 0,
+        matched: 0,
 
-        voidRecords: 0
+        missingSystem: 0,
+
+        missingGDS: 0,
+
+        duplicateGroups: 0,
+
+        voidRecords: 0,
+
+        processingTime: 0
 
     }
 
 });
 
+let state = initialState();
 
-/* ============================================================================
-   INTERNAL STATE
-============================================================================ */
+/* ============================================================
+   DATASETS
+============================================================ */
 
-let state = structuredClone(DEFAULT_STATE);
+export function setDataset(type, dataset) {
 
+    if (!(type in state.datasets)) {
 
-/* ============================================================================
-   HELPERS
-============================================================================ */
+        throw new Error(`Unknown dataset: ${type}`);
+
+    }
+
+    state.datasets[type] = dataset;
+
+}
+
+export function getDataset(type) {
+
+    return state.datasets[type];
+
+}
+
+/* ============================================================
+   RECONCILIATION
+============================================================ */
+
+export function setReconciliation(result) {
+
+    state.reconciliation = result;
+
+}
+
+export function getReconciliation() {
+
+    return state.reconciliation;
+
+}
+
+/* ============================================================
+   UI STATE
+============================================================ */
+
+export function setActiveView(view) {
+
+    state.ui.activeView = view;
+
+}
+
+export function getActiveView() {
+
+    return state.ui.activeView;
+
+}
+
+export function setSearch(text) {
+
+    state.ui.search = text.trim();
+
+}
+
+export function getSearch() {
+
+    return state.ui.search;
+
+}
+
+export function setFilter(filter) {
+
+    state.ui.filter = filter;
+
+}
+
+export function getFilter() {
+
+    return state.ui.filter;
+
+}
+
+/* ============================================================
+   DIAGNOSTICS
+============================================================ */
+
+export function updateDiagnostics(values = {}) {
+
+    state.diagnostics = {
+
+        ...state.diagnostics,
+
+        ...values
+
+    };
+
+}
+
+export function getDiagnostics() {
+
+    return state.diagnostics;
+
+}
+
+/* ============================================================
+   STATE
+============================================================ */
 
 /**
- * Returns a deep copy of the current state.
+ * Returns a read-only snapshot of the application state.
  *
  * @returns {Object}
  */
@@ -102,287 +180,11 @@ export function getState() {
 
 }
 
-
 /**
- * Replaces the application state.
- *
- * @param {Object} newState
- */
-export function replaceState(newState) {
-
-    state = structuredClone(newState);
-
-}
-
-
-/**
- * Resets state to defaults.
+ * Resets the application state.
  */
 export function resetState() {
 
-    state = structuredClone(DEFAULT_STATE);
-
-}
-
-
-/**
- * Updates top-level properties.
- *
- * @param {Object} updates
- */
-export function setState(updates) {
-
-    state = {
-
-        ...state,
-
-        ...updates
-
-    };
-
-}
-
-
-/**
- * Updates a nested object.
- *
- * @param {string} section
- * @param {Object} updates
- */
-export function updateSection(
-
-    section,
-
-    updates
-
-) {
-
-    state[section] = {
-
-        ...state[section],
-
-        ...updates
-
-    };
-
-}
-
-
-/* ============================================================================
-   FILES
-============================================================================ */
-
-export function setGDSFile(file){
-
-    updateSection(
-
-        "files",
-
-        {
-
-            gds:file
-
-        }
-
-    );
-
-}
-
-export function setSystemFile(file){
-
-    updateSection(
-
-        "files",
-
-        {
-
-            system:file
-
-        }
-
-    );
-
-}
-
-
-/* ============================================================================
-   DATASETS
-============================================================================ */
-
-export function setGDSDataset(dataset){
-
-    updateSection(
-
-        "datasets",
-
-        {
-
-            gds:dataset
-
-        }
-
-    );
-
-}
-
-export function setSystemDataset(dataset){
-
-    updateSection(
-
-        "datasets",
-
-        {
-
-            system:dataset
-
-        }
-
-    );
-
-}
-
-
-/* ============================================================================
-   RECONCILIATION
-============================================================================ */
-
-export function setReconciliation(result){
-
-    state.reconciliation = result;
-
-}
-
-
-/* ============================================================================
-   VIEW
-============================================================================ */
-
-export function setCurrentView(view){
-
-    state.currentView = view;
-
-}
-
-export function setSearch(text){
-
-    state.searchText = text;
-
-}
-
-export function setFilter(filter){
-
-    state.filter = filter;
-
-}
-
-
-/* ============================================================================
-   DASHBOARD
-============================================================================ */
-
-export function updateDashboard(values){
-
-    updateSection(
-
-        "dashboard",
-
-        values
-
-    );
-
-}
-
-
-/* ============================================================================
-   PROCESSING
-============================================================================ */
-
-export function beginProcessing(){
-
-    updateSection(
-
-        "processing",
-
-        {
-
-            running:true,
-
-            startedAt:performance.now(),
-
-            finishedAt:null,
-
-            duration:0
-
-        }
-
-    );
-
-}
-
-export function endProcessing(){
-
-    const finished = performance.now();
-
-    const duration =
-
-        finished -
-
-        state.processing.startedAt;
-
-    updateSection(
-
-        "processing",
-
-        {
-
-            running:false,
-
-            finishedAt:finished,
-
-            duration
-
-        }
-
-    );
-
-}
-
-
-/* ============================================================================
-   DIAGNOSTICS
-============================================================================ */
-
-export function updateDiagnostics(values){
-
-    updateSection(
-
-        "diagnostics",
-
-        values
-
-    );
-
-}
-
-
-/* ============================================================================
-   SELECTORS
-============================================================================ */
-
-export function hasFiles(){
-
-    return (
-
-        state.files.gds &&
-
-        state.files.system
-
-    );
-
-}
-
-export function isProcessing(){
-
-    return state.processing.running;
+    state = initialState();
 
 }
