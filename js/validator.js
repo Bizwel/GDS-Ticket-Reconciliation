@@ -1,267 +1,253 @@
 /**
- * ============================================================================
+ * ============================================================
  * GDS Ticket Reconciliation Tool
- * Version : 2.0.0
+ * Version : 2.0
  * File    : js/validator.js
- *
- * Validates uploaded files before parsing.
- * ============================================================================
+ * Purpose : Upload validation.
+ * ============================================================
  */
 
-import {
+import { CONFIG } from "./config.js";
 
-    FILE_TYPES,
-    PARSER
-
-} from "./config.js";
-
-/* ============================================================================
-   FILE EXTENSION
-============================================================================ */
-
-/**
- * Returns file extension.
- *
- * @param {File} file
- * @returns {string}
- */
-export function getExtension(file){
-
-    if(!file){
-
-        return "";
-
-    }
-
-    const parts =
-
-        file.name.split(".");
-
-    return parts
-        .pop()
-        .toLowerCase();
-
-}
-
-
-/* ============================================================================
+/* ============================================================
    FILE TYPE
-============================================================================ */
+============================================================ */
 
 /**
- * Checks if extension is supported.
+ * Validates the uploaded file extension.
  *
  * @param {File} file
  * @returns {boolean}
  */
-export function isSupportedFile(file){
+function isSupportedExtension(file) {
 
-    return FILE_TYPES.ALL.includes(
+    const extension =
+        "." +
+        file.name
+            .split(".")
+            .pop()
+            .toLowerCase();
 
-        getExtension(file)
-
+    return CONFIG.files.supported.includes(
+        extension
     );
 
 }
 
-
-/* ============================================================================
+/* ============================================================
    FILE SIZE
-============================================================================ */
+============================================================ */
 
 /**
- * Returns size in MB.
- *
- * @param {File} file
- * @returns {number}
- */
-export function fileSizeMB(file){
-
-    return Number(
-
-        (
-
-            file.size /
-
-            (1024 * 1024)
-
-        ).toFixed(2)
-
-    );
-
-}
-
-
-/**
- * Checks maximum file size.
+ * Validates file size.
  *
  * @param {File} file
  * @returns {boolean}
  */
-export function isValidSize(file){
+function isValidSize(file) {
 
-    return (
+    const limit =
+        CONFIG.validation.maximumUploadMB *
+        1024 *
+        1024;
 
-        fileSizeMB(file)
-
-        <=
-
-        PARSER.MAX_FILE_SIZE_MB
-
-    );
+    return file.size <= limit;
 
 }
 
-
-/* ============================================================================
-   EMPTY FILE
-============================================================================ */
+/* ============================================================
+   FILE EXISTS
+============================================================ */
 
 /**
- * Checks for empty file.
+ * Ensures a file was selected.
  *
- * @param {File} file
+ * @param {File|null} file
  * @returns {boolean}
  */
-export function isEmptyFile(file){
+function hasFile(file) {
 
-    return file.size === 0;
+    return !!file;
 
 }
 
-
-/* ============================================================================
-   FILE VALIDATION
-============================================================================ */
+/* ============================================================
+   VALIDATION
+============================================================ */
 
 /**
- * Validates uploaded file.
+ * Validates a file before parsing.
  *
  * @param {File} file
- * @returns {{valid:boolean,message:string}}
+ * @returns {Object}
  */
-export function validateFile(file){
+export function validateFile(file) {
 
-    if(!file){
+    const errors = [];
 
-        return{
+    const warnings = [];
 
-            valid:false,
+    if (!hasFile(file)) {
 
-            message:
+        errors.push(
+            "No file selected."
+        );
 
-                "No file selected."
+        return {
 
-        };
+            valid: false,
 
-    }
+            errors,
 
-    if(!isSupportedFile(file)){
-
-        return{
-
-            valid:false,
-
-            message:
-
-                "Unsupported file format."
+            warnings
 
         };
 
     }
 
-    if(isEmptyFile(file)){
+    if (!isSupportedExtension(file)) {
 
-        return{
-
-            valid:false,
-
-            message:
-
-                "Uploaded file is empty."
-
-        };
+        errors.push(
+            "Unsupported file type."
+        );
 
     }
 
-    if(!isValidSize(file)){
+    if (!isValidSize(file)) {
 
-        return{
+        errors.push(
 
-            valid:false,
+            `File exceeds ${CONFIG.validation.maximumUploadMB} MB.`
 
-            message:
-
-                `Maximum file size is ${PARSER.MAX_FILE_SIZE_MB} MB.`
-
-        };
+        );
 
     }
 
-    return{
+    if (file.size === 0) {
 
-        valid:true,
+        errors.push(
+            "The selected file is empty."
+        );
 
-        message:""
+    }
+
+    return {
+
+        valid:
+
+            errors.length === 0,
+
+        errors,
+
+        warnings
 
     };
 
 }
 
-
-/* ============================================================================
-   MULTIPLE FILES
-============================================================================ */
+/* ============================================================
+   DATASET VALIDATION
+============================================================ */
 
 /**
- * Validates two uploaded files.
+ * Validates parsed worksheet rows.
  *
- * @param {File} gdsFile
- * @param {File} systemFile
- * @returns {{valid:boolean,message:string}}
+ * @param {Array[]} rows
+ * @returns {Object}
  */
-export function validateUploads(
+export function validateRows(rows) {
 
-    gdsFile,
+    const errors = [];
 
-    systemFile
+    const warnings = [];
 
-){
+    if (!Array.isArray(rows)) {
 
-    const gds =
-
-        validateFile(
-
-            gdsFile
-
+        errors.push(
+            "Worksheet could not be read."
         );
-
-    if(!gds.valid){
-
-        return gds;
 
     }
 
-    const system =
+    else if (
 
-        validateFile(
+        rows.length <
+        CONFIG.validation.minimumRows
 
-            systemFile
+    ) {
 
+        errors.push(
+            "Worksheet contains insufficient rows."
         );
-
-    if(!system.valid){
-
-        return system;
 
     }
 
-    return{
+    return {
 
-        valid:true,
+        valid:
 
-        message:""
+            errors.length === 0,
+
+        errors,
+
+        warnings
 
     };
+
+}
+
+/* ============================================================
+   RESULT HELPERS
+============================================================ */
+
+/**
+ * Returns true if a validation result is valid.
+ *
+ * @param {Object} result
+ * @returns {boolean}
+ */
+export function isValid(result) {
+
+    return result.valid;
+
+}
+
+/**
+ * Combines multiple validation results.
+ *
+ * @param  {...Object} results
+ * @returns {Object}
+ */
+export function mergeResults(...results) {
+
+    const merged = {
+
+        valid: true,
+
+        errors: [],
+
+        warnings: []
+
+    };
+
+    results.forEach(result => {
+
+        if (!result.valid) {
+
+            merged.valid = false;
+
+        }
+
+        merged.errors.push(
+            ...result.errors
+        );
+
+        merged.warnings.push(
+            ...result.warnings
+        );
+
+    });
+
+    return merged;
 
 }
